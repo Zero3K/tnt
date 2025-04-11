@@ -8,6 +8,5 @@ find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 add_executable(${PROJECT_NAME} tnt/main.cpp)
-add_library(testlib tnt/parser/pp.cpp)
 
 target_link_libraries(${PROJECT_NAME} testlib ${OPENSSL_LIBRARIES})
