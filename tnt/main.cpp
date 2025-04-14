@@ -1,14 +1,18 @@
 
+#include <fstream>
 #include <iostream>
-#include "parser/parser.h"
+#include "metainfo/parser.h"
 
-// testing
 int main() {
+	using namespace Metainfo;
+
 	std::cout << "insert torrent file path here: ";
 	std::string path;
 	std::cin >> path;
 
-	TorrentFile file = LoadTorrentFile(path);
+	TorrentFile file;
+	std::ifstream stream(path);
+	stream >> file;
 
 	std::cout << "Parsed:" << std::endl;
 	std::cout << " - " << file.name << std::endl;

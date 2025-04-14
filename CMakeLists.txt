@@ -8,6 +8,12 @@ find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 add_executable(${PROJECT_NAME} tnt/main.cpp)
-add_library(parser tnt/parser/parser.cpp)
+add_library(bencoding 
+	tnt/bencoding/decoding.cpp
+	tnt/bencoding/encoding.cpp
+)
+add_library(metainfo 
+	tnt/metainfo/parser.cpp
+)
 
-target_link_libraries(${PROJECT_NAME} parser ${OPENSSL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} bencoding metainfo ${OPENSSL_LIBRARIES})
