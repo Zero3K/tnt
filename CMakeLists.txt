@@ -12,8 +12,8 @@ add_library(bencoding
 	tnt/bencoding/decoding.cpp
 	tnt/bencoding/encoding.cpp
 )
-add_library(metainfo 
-	tnt/metainfo/parser.cpp
+add_library(tf_utils
+	tnt/tf_utils/parser.cpp
 )
 
-target_link_libraries(${PROJECT_NAME} bencoding metainfo ${OPENSSL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} bencoding tf_utils ${OPENSSL_LIBRARIES})

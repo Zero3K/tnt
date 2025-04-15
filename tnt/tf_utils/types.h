@@ -1,6 +1,8 @@
+#pragma once
+
 #include <vector>
 
-namespace Metainfo {
+namespace TFUtils {
 	struct TorrentFile {
         std::string announce;
         std::string comment;

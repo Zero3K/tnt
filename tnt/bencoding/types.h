@@ -7,7 +7,7 @@
 
 namespace Bencoding {
 	/*
-	 * Base class for all `bencoding` entities.
+	 * Base class for all bencode entities.
 	 */
     struct Entity {
         virtual ~Entity() = default;

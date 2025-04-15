@@ -6,8 +6,8 @@
 #include "../bencoding/decoding.h"
 #include "../bencoding/encoding.h"
 
-namespace Metainfo {
-    TorrentFile ParseInfo(std::istream& stream) {
+namespace TFUtils {
+    TorrentFile ParseTorrentFile(std::istream& stream) {
         TorrentFile result;
         
         auto data = std::make_shared<Bencoding::Entity>();
@@ -40,7 +40,7 @@ namespace Metainfo {
     }
 
     std::istream& operator>>(std::istream& stream, TorrentFile& file) {
-        file = ParseInfo(stream);
+        file = ParseTorrentFile(stream);
         return stream;
     }
 }

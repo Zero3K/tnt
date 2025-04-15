@@ -1,23 +1,23 @@
 
 #include <fstream>
 #include <iostream>
-#include "metainfo/parser.h"
+#include "tf_utils/parser.h"
 
 int main() {
-	using namespace Metainfo;
+    using namespace TFUtils;
 
-	std::cout << "insert torrent file path here: ";
-	std::string path;
-	std::cin >> path;
+    std::cout << "insert torrent file path here: ";
+    std::string path;
+    std::cin >> path;
 
-	TorrentFile file;
-	std::ifstream stream(path);
-	stream >> file;
+    TorrentFile file;
+    std::ifstream stream(path);
+    stream >> file;
 
-	std::cout << "Parsed:" << std::endl;
-	std::cout << " - " << file.name << std::endl;
-	std::cout << " - " << file.announce << std::endl;
-	std::cout << " - " << file.comment << std::endl;
-	
-	return 0;
+    std::cout << "Parsed:" << std::endl;
+    std::cout << " - " << file.name << std::endl;
+    std::cout << " - " << file.announce << std::endl;
+    std::cout << " - " << file.comment << std::endl;
+    
+    return 0;
 }
