@@ -2,8 +2,8 @@
 
 #include <vector>
 
-namespace TFUtils {
-	struct TorrentFile {
+namespace TorrentFile {
+	struct Metainfo {
         std::string announce;
         std::string comment;
         std::vector<std::string> pieceHashes;

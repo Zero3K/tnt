@@ -3,7 +3,7 @@
 #include <memory>
 #include "types.h"
 
-namespace Bencoding {
+namespace Bencode {
     std::shared_ptr<Entity> ReadEntity(std::istream &stream);
     std::shared_ptr<Integer> ReadInteger(std::istream &stream);
     std::shared_ptr<String> ReadString(std::istream &stream);

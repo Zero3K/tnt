@@ -8,12 +8,12 @@ find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 add_executable(${PROJECT_NAME} tnt/main.cpp)
-add_library(bencoding 
-	tnt/bencoding/decoding.cpp
-	tnt/bencoding/encoding.cpp
+add_library(bencode 
+	tnt/bencode/decoding.cpp
+	tnt/bencode/encoding.cpp
 )
-add_library(tf_utils
-	tnt/tf_utils/parser.cpp
+add_library(torrent_file
+	tnt/torrent_file/parser.cpp
 )
 
-target_link_libraries(${PROJECT_NAME} bencoding tf_utils ${OPENSSL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} bencode torrent_file ${OPENSSL_LIBRARIES})

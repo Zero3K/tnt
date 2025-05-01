@@ -5,7 +5,7 @@
 #include "decoding.h"
 
 
-namespace Bencoding {
+namespace Bencode {
     std::shared_ptr<Integer> ReadInteger(std::istream& stream) {
         if (stream.peek() != 'i')
             throw;

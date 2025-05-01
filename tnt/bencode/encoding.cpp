@@ -4,7 +4,7 @@
 #include <iostream>
 
 
-namespace Bencoding {
+namespace Bencode {
     void WriteEntity(std::ostream& stream, std::shared_ptr<Entity> entity) {
         if (std::dynamic_pointer_cast<Integer>(entity) != nullptr) {
             WriteInteger(stream, std::static_pointer_cast<Integer>(entity));
@@ -27,8 +27,8 @@ namespace Bencoding {
 
     void WriteList(std::ostream& stream, std::shared_ptr<List> entity) {
         stream << "l";
-        for (auto& entity : entity->value)
-            stream << entity;
+        for (auto& entity1 : entity->value)
+            WriteEntity(stream, entity1);
         stream << "e";
     }
 
@@ -37,13 +37,9 @@ namespace Bencoding {
         for (auto& [key, val] : entity->value) {
             auto keyEntity = std::make_shared<String>();
             keyEntity->value = key;
-            stream << keyEntity << val;
+            WriteEntity(stream, keyEntity);
+            WriteEntity(stream, val);
         }
         stream << "e";
-    }
-
-    std::ostream& operator<<(std::ostream& stream, const std::shared_ptr<Entity>& entity) {
-        WriteEntity(stream, entity);
-        return stream;
     }
 }
