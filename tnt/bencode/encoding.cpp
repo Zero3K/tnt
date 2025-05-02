@@ -1,4 +1,3 @@
-
 #include "encoding.h"
 #include <memory>
 #include <iostream>

@@ -2,6 +2,7 @@
 
 #include "types.h"
 
+
 namespace Bencode {
 	void WriteEntity(std::ostream&, std::shared_ptr<Entity> entity);
     void WriteInteger(std::ostream&, std::shared_ptr<Integer> entity);

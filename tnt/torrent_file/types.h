@@ -2,6 +2,7 @@
 
 #include <vector>
 
+
 namespace TorrentFile {
 	struct Metainfo {
         std::string announce;

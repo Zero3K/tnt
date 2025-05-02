@@ -1,7 +1,8 @@
 #pragma once
 
-#include <iostream>
 #include "types.h"
+#include <iostream>
+
 
 namespace TorrentFile {
     Metainfo ParseTorrentFile(std::istream& stream);

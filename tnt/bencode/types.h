@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 
+
 namespace Bencode {
 	/*
 	 * Base class for all bencode entities.

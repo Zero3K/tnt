@@ -1,10 +1,10 @@
+#include "../bencode/decoding.h"
+#include "../bencode/encoding.h"
 #include <iostream>
 #include <sstream>
 #include <memory>
 #include <openssl/sha.h>
 #include "types.h"
-#include "../bencode/decoding.h"
-#include "../bencode/encoding.h"
 
 
 namespace TorrentFile {

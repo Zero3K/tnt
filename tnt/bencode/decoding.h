@@ -1,7 +1,8 @@
 #pragma once
 
-#include <memory>
 #include "types.h"
+#include <memory>
+
 
 namespace Bencode {
     std::shared_ptr<Entity> ReadEntity(std::istream &stream);

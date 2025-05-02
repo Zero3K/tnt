@@ -1,8 +1,7 @@
+#include "decoding.h"
 #include <string>
 #include <memory>
 #include <iostream>
-
-#include "decoding.h"
 
 
 namespace Bencode {
