@@ -30,11 +30,14 @@ add_library(bencode
 add_library(torrent_file
     tnt/torrent_file/parser.cpp
 )
-add_library(torrent_tracker STATIC
+add_library(torrent_tracker
     tnt/torrent_tracker/torrent_tracker.cpp
 )
 target_link_libraries(
     torrent_tracker PRIVATE cpr::cpr
+)
+add_library(tcp_connection
+    tnt/tcp_connection/tcp_connection.cpp
 )
 
 add_executable(${PROJECT_NAME} tnt/main.cpp)
