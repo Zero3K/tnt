@@ -39,6 +39,11 @@ target_link_libraries(
 add_library(tcp_connection
     tnt/tcp_connection/tcp_connection.cpp
 )
+add_library(peer_connection
+    tnt/peer_connection/peer_connection.cpp
+    tnt/peer_connection/message.h
+    tnt/peer_connection/message.cpp
+)
 
 add_executable(${PROJECT_NAME} tnt/main.cpp)
 
@@ -50,4 +55,6 @@ target_link_libraries(
     bencode 
     torrent_file 
     torrent_tracker
+    tcp_connection
+    peer_connection
 )
