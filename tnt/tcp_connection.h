@@ -4,10 +4,11 @@
 #include <chrono>
 
 
-class TcpConnect {
+class TcpConnection {
 public:
-    TcpConnect(std::string ip, int port, std::chrono::milliseconds connectTimeout, std::chrono::milliseconds readTimeout);
-    ~TcpConnect();
+    TcpConnection(std::string ip, int port, std::chrono::milliseconds connectTimeout, std::chrono::milliseconds readTimeout);
+    
+    ~TcpConnection();
 
     void EstablishConnection();
 

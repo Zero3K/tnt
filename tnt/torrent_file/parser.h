@@ -4,7 +4,5 @@
 #include <iostream>
 
 
-namespace TorrentFile {
-    Metainfo ParseTorrentFile(std::istream& stream);
-    std::istream& operator>>(std::istream&, Metainfo&);
-}
+TorrentFile ParseTorrentFile(std::istream& stream);
+std::istream& operator>>(std::istream&, TorrentFile&);

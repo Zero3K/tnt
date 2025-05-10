@@ -1,7 +1,8 @@
+#include "piece_storage/piece_storage.h"
 #include "torrent_file/parser.h"
 #include "torrent_file/types.h"
-#include "torrent_tracker/torrent_tracker.h"
-#include "peer_connection/peer_connection.h"
+#include "torrent_tracker.h"
+#include "peer_connection.h"
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -13,7 +14,7 @@ int main(int argc, char **argv) {
     std::string path;
     std::cin >> path;
 
-    TorrentFile::Metainfo file;
+    TorrentFile file;
     std::ifstream stream(path);
     stream >> file;
 
@@ -21,22 +22,27 @@ int main(int argc, char **argv) {
     std::cout << " - " << file.name << std::endl;
     std::cout << " - " << file.announce << std::endl;
     std::cout << " - " << file.comment << std::endl << std::endl;
+    std::cout << " - pieces: " << file.pieceHashes.size() << std::endl << std::endl;
 
     std::cout << "getting peers..." << std::flush; 
-    TorrentTracker::Tracker tracker(file.announce);
+    TorrentTracker tracker(file.announce);
     tracker.UpdatePeers(file, "TEST0APP1DONT2WORRY3", 12345);
     auto& peers = tracker.GetPeers();
     std::cout << " found " << peers.size() << " peers" << std::endl;
 
-    for (const TorrentTracker::Peer& peer : peers) {
+    PieceStorage pieceStorage(file);
+    for (const Peer& peer : peers) {
         std::cout << "trying to reach " << peer.ip << ":" << peer.port << "... " << std::flush;
         try {
-            PeerConnect conn(peer, file, "TEST0APP1DONT2WORRY3");
+            PeerConnection conn(peer, file, "TEST0APP1DONT2WORRY3", pieceStorage);
             conn.Run();
             std::cout << "success!" << std::endl;
             conn.Terminate();
+            break;
+        } catch (std::runtime_error error) {
+            std::cout << "runtime: " << error.what() << std::endl;
         } catch (std::exception error) {
-            std::cout << "fail: " << error.what() << std::endl;
+            std::cout << "exc: " << error.what() << std::endl;
         }
     }
 

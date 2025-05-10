@@ -10,14 +10,14 @@
 #include <sys/poll.h>
 
 
-TcpConnect::TcpConnect(std::string ip, int port, std::chrono::milliseconds connectTimeout, std::chrono::milliseconds readTimeout) :
+TcpConnection::TcpConnection(std::string ip, int port, std::chrono::milliseconds connectTimeout, std::chrono::milliseconds readTimeout) :
     ip_(ip), port_(port), connectTimeout_(connectTimeout), readTimeout_(readTimeout) {}
 
-TcpConnect::~TcpConnect() {
+TcpConnection::~TcpConnection() {
     CloseConnection();
 }
 
-void TcpConnect::EstablishConnection() {
+void TcpConnection::EstablishConnection() {
     sock_ = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_ == -1) {
         throw std::runtime_error(strerror(errno));
@@ -69,20 +69,20 @@ void TcpConnect::EstablishConnection() {
     fcntl(sock_, F_SETFL, flags & (~O_NONBLOCK));
 }
 
-void TcpConnect::SendData(const std::string& data) const {
+void TcpConnection::SendData(const std::string& data) const {
     if (send(sock_, &data[0], data.size(), 0) == -1) {
         throw std::runtime_error(std::string("send failure: ") + strerror(errno));
     }
 }
 
-std::string TcpConnect::ReceiveData(size_t bufferSize) const {
+std::string TcpConnection::ReceiveData(size_t bufferSize) const {
     std::string result;
 
     if (bufferSize == 0) {
         result.resize(4);
 
-        if (recv(sock_, &result[0], 4, 0) < 4)
-            throw std::runtime_error(std::string("recv failure whiel getting str len"));
+        if (recv(sock_, &result[0], 4, MSG_WAITALL) < 4)
+            throw std::runtime_error(std::string("recv failure while getting str len: ") + strerror(errno));
         bufferSize = ntohl(*reinterpret_cast<uint32_t*>(&result[0]));
 
         if (bufferSize == 0)
@@ -92,13 +92,8 @@ std::string TcpConnect::ReceiveData(size_t bufferSize) const {
     std::string buf;
     buf.resize(bufferSize);
 
-    int total = 0;
-    while (total < bufferSize) {
-        int res = recv(sock_, &buf[total], bufferSize - total, 0);
-        if (res == -1 || res == 0) {
-            throw std::runtime_error(std::string("recv failure: ") + strerror(errno));
-        }
-        total += res;
+    if (recv(sock_, &buf[0], bufferSize, MSG_WAITALL) < bufferSize) {
+        throw std::runtime_error(std::string("recv failure: ") + strerror(errno));
     }
 
     result += buf;
@@ -106,6 +101,6 @@ std::string TcpConnect::ReceiveData(size_t bufferSize) const {
     return result;
 }
 
-void TcpConnect::CloseConnection() {
+void TcpConnection::CloseConnection() {
     close(sock_);
 }
