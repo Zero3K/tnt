@@ -3,16 +3,26 @@
 #include "piece_storage/piece_storage.h"
 #include "torrent_file/types.h"
 #include <iostream>
-#include <sstream>
 #include <sys/wait.h>
-#include <utility>
 #include <netinet/in.h>
 
 
 using namespace std::chrono_literals;
 
+PeerPiecesAvailability::PeerPiecesAvailability() = default;
+
+PeerPiecesAvailability::PeerPiecesAvailability(std::string bitfield) : bitfield_(bitfield) {}
+
+bool PeerPiecesAvailability::IsPieceAvailable(size_t pieceIndex) const {
+    return (bitfield_[pieceIndex / 8] >> (pieceIndex % 8)) & 1;
+}
+
+void PeerPiecesAvailability::SetPieceAvailability(size_t pieceIndex) {
+    bitfield_[pieceIndex / 8] |= (1 << (pieceIndex % 8));
+}
+
 PeerConnection::PeerConnection(const Peer& peer, const TorrentFile &tf, std::string selfPeerId, PieceStorage& pieceStorage) :
-        tf_(tf), socket_(peer.ip, peer.port, 2000ms, 3000ms), selfPeerId_(selfPeerId), pieceStorage_(pieceStorage) {
+        tf_(tf), socket_(peer.ip, peer.port, 500ms, 500ms), selfPeerId_(selfPeerId), pieceStorage_(pieceStorage) {
     piecesAvailability_ = PeerPiecesAvailability(std::string((tf_.pieceHashes.size() + 7) / 8 * 8, 0)); 
 }
 
@@ -144,16 +154,10 @@ void PeerConnection::ProcessPieceMsg(const Message& msg) {
     waitingBlock_ = false;
     currentPiece_->SaveBlock(blockOffset, data);
 
-    if (currentPiece_->AllBlocksRetrieved()) {
-        if (!currentPiece_->HashMatches()) {
-            currentPiece_->Reset();
-        } else {
-            std::cout << "hash match" << std::endl;
-            pieceStorage_.PieceProcessed(currentPiece_);
-            currentPiece_ = nullptr;
-        }   
+    if (currentPiece_->Validate()) {
+        pieceStorage_.PieceProcessed(currentPiece_);
+        currentPiece_ = nullptr;
     }
-
 }
 
 void PeerConnection::Terminate() {
@@ -172,10 +176,10 @@ void PeerConnection::RunMessageFlow() {
                 }
             }
 
-            auto* block = currentPiece_->FirstMissingBlock();
-            SendRequestMsg(currentPiece_->GetIndex(), block->offset, block->length);
+            auto &block = currentPiece_->GetFirstMissingBlock();
+            SendRequestMsg(currentPiece_->GetIndex(), block.offset, block.length);
             waitingBlock_ = true;
-            std::cout << "sending request for block " << block->offset << " in piece " << currentPiece_->GetIndex() << std::endl;
+            std::cout << "sending request for block " << block.offset << " in piece " << currentPiece_->GetIndex() << std::endl;
         } else {
             Message msg = Message::Parse(socket_.ReceiveData());
             std::cout << "got code " << (int)msg.id << std::endl;

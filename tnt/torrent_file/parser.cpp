@@ -1,10 +1,10 @@
 #include "../bencode/decoding.h"
 #include "../bencode/encoding.h"
+#include "types.h"
 #include <iostream>
 #include <sstream>
 #include <memory>
 #include <openssl/sha.h>
-#include "types.h"
 
 
 TorrentFile ParseTorrentFile(std::istream& stream) {

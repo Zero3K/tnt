@@ -4,79 +4,44 @@
 #include <vector>
 #include <optional>
 #include <memory>
+#include <chrono>
 
-/*
- * Части файла скачиваются не за одно сообщение, а блоками размером 2^14 байт или меньше (последний блок обычно меньше)
- */
+
 struct Block {
-
-    enum Status {
-        Missing = 0,
-        Pending,
-        Retrieved,
-    };
-
-    uint32_t piece;  // id части файла, к которой относится данный блок
-    uint32_t offset;  // смещение начала блока относительно начала части файла в байтах
-    uint32_t length;  // длина блока в байтах
-    Status status;  // статус загрузки данного блока
-    std::string data;  // бинарные данные
+    uint32_t piece;
+    uint32_t offset;
+    uint32_t length;
+    std::string data;
 };
 
-/*
- * Часть скачиваемого файла
- */
 class Piece {
 public:
     Piece(size_t index, size_t length, std::string hash);
 
-    /*
-     * Совпадает ли хеш скачанных данных с ожидаемым
-     */
-    bool HashMatches() const;
+    // Returns reference to the first still unretrieved block.
+    const Block& GetFirstMissingBlock();
 
-    /*
-     * Дать указатель на отсутствующий (еще не скачанный и не запрошенный) блок
-     */
-    Block* FirstMissingBlock();
-
-    /*
-     * Получить порядковый номер части файла
-     */
-    size_t GetIndex() const;
-
-    /*
-     * Сохранить скачанные данные для какого-то блока
-     */
+    // Saves bytes passed in `data` with offset equal to `blockOffset`.
     void SaveBlock(size_t blockOffset, std::string data);
+    
+    // Validates that piece was fully recieved and the data was not corrupted.
+    // Returns true if all data is ready and correct.
+    bool Validate();
 
-    /*
-     * Скачали ли уже все блоки
-     */
+    // Returns piece index.
+    size_t GetIndex() const;
+private:
+
     bool AllBlocksRetrieved() const;
 
-    /*
-     * Получить скачанные данные для части файла
-     */
     std::string GetData() const;
 
-    /*
-     * Посчитать хеш по скачанным данным
-     */
-    std::string GetDataHash() const;
+    std::string GetRetrievedDataHash() const;
 
-    /*
-     * Получить хеш для части из .torrent файла
-     */
-    const std::string& GetHash() const;
-
-    /*
-     * Удалить все скачанные данные и отметить все блоки как Missing
-     */
     void Reset();
 
-private:
     const size_t index_, length_;
     const std::string hash_;
     std::vector<Block> blocks_;
+    size_t retrievedCount_;
 };

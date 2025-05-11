@@ -10,23 +10,13 @@
 
 class PeerPiecesAvailability {
 public:
-    PeerPiecesAvailability() {
-        
-    }
+    PeerPiecesAvailability();
 
-    explicit PeerPiecesAvailability(std::string bitfield) : bitfield_(bitfield) {}
+    explicit PeerPiecesAvailability(std::string bitfield);
 
-    bool IsPieceAvailable(size_t pieceIndex) const {
-        return (bitfield_[pieceIndex / 8] >> (pieceIndex % 8)) & 1;
-    }
+    bool IsPieceAvailable(size_t pieceIndex) const;
 
-    void SetPieceAvailability(size_t pieceIndex) {
-        bitfield_[pieceIndex / 8] |= (1 << (pieceIndex % 8));
-    }
-
-    size_t Size() const {
-        return bitfield_.size() * 8;
-    }
+    void SetPieceAvailability(size_t pieceIndex);
 private:
     std::string bitfield_;
 };
