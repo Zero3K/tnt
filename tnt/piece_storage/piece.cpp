@@ -4,11 +4,11 @@
 #include <openssl/sha.h>
 #include <chrono>
 
+
 using namespace std::chrono_literals;
 
 static constexpr size_t BLOCK_SIZE = 1 << 14;
 static constexpr std::chrono::duration BLOCK_ASSIGN_TIME = 1000ms;
-
 
 Piece::Piece(size_t index, size_t length, std::string hash) : 
         index_(index), length_(length), hash_(hash) {

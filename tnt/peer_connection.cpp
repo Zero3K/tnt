@@ -179,10 +179,8 @@ void PeerConnection::RunMessageFlow() {
             auto &block = currentPiece_->GetFirstMissingBlock();
             SendRequestMsg(currentPiece_->GetIndex(), block.offset, block.length);
             waitingBlock_ = true;
-            std::cout << "sending request for block " << block.offset << " in piece " << currentPiece_->GetIndex() << std::endl;
         } else {
             Message msg = Message::Parse(socket_.ReceiveData());
-            std::cout << "got code " << (int)msg.id << std::endl;
             ProcessMsg(msg);
         }
     }

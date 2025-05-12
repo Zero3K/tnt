@@ -18,6 +18,7 @@ public:
 
     bool QueueIsEmpty() const;
 
-protected:
+private:
     std::queue<std::shared_ptr<Piece>> remainPieces_;
+    mutable std::mutex queueMtx_;
 };
