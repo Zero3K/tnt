@@ -31,18 +31,22 @@ add_library(torrent_file
     tnt/torrent_file/parser.cpp
 )
 add_library(torrent_tracker
-    tnt/torrent_tracker/torrent_tracker.cpp
+    tnt/torrent_tracker.cpp
 )
 target_link_libraries(
     torrent_tracker PRIVATE cpr::cpr
 )
 add_library(tcp_connection
-    tnt/tcp_connection/tcp_connection.cpp
+    tnt/tcp_connection.cpp
 )
 add_library(peer_connection
-    tnt/peer_connection/peer_connection.cpp
-    tnt/peer_connection/message.h
-    tnt/peer_connection/message.cpp
+    tnt/peer_connection.cpp
+    tnt/message.h
+    tnt/message.cpp
+)
+add_library(piece_storage
+    tnt/piece_storage/piece.cpp
+    tnt/piece_storage/piece_storage.cpp
 )
 
 add_executable(${PROJECT_NAME} tnt/main.cpp)
@@ -57,4 +61,5 @@ target_link_libraries(
     torrent_tracker
     tcp_connection
     peer_connection
+    piece_storage
 )
