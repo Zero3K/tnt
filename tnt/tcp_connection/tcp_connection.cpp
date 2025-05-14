@@ -1,4 +1,5 @@
 #include "tcp_connection.h"
+#include "exception.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdexcept>
