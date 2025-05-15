@@ -25,5 +25,7 @@ struct Message {
     static Message Parse(const std::string& messageString);
     static Message Init(Id id, const std::string& payload = "");
 
+    static Message InitRequest(size_t pieceIndex, size_t blockOffset, size_t blockLength);
+
     std::string ToString() const;
 };

@@ -14,7 +14,7 @@ using namespace std::chrono_literals;
 
 
 PeerConnection::PeerConnection(const Peer& peer, std::string selfId, std::string hash) 
-    : peer_(peer), selfId_(selfId), hash_(hash), socket_(peer.ip, peer.port) {}
+    : peer_(peer), selfId_(selfId), hash_(hash), socket_(peer.ip, peer.port, 1s, 10s) {}
 
 PeerConnection::~PeerConnection() {
     socket_.CloseConnection();
@@ -55,17 +55,9 @@ void PeerConnection::SendMessage(const Message& msg) const {
     socket_.SendData(msg.ToString());
 }
 
-std::optional<Message> PeerConnection::RecieveMessage() const {
-    try {
-        Message msg = Message::Parse(socket_.ReceiveData());
-        return std::make_optional(msg);
-    } catch (TcpTimeoutError& exc) {
-        return std::nullopt;
-    } catch (std::exception& exc) {
-        throw exc;
-    } catch (...) {
-        throw std::runtime_error("Unknown error");
-    }
+Message PeerConnection::RecieveMessage() const {
+    Message msg = Message::Parse(socket_.ReceiveData());
+    return msg;
 }
 
 void PeerConnection::CloseConnection() {

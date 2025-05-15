@@ -11,8 +11,7 @@ static constexpr size_t BLOCK_SIZE = 1 << 14;
 static constexpr std::chrono::duration BLOCK_ASSIGN_TIME = 1000ms;
 
 Piece::Piece(size_t index, size_t length, std::string hash) : 
-        index_(index), length_(length), hash_(hash) {
-    blocks_ = std::vector<Block>((length + BLOCK_SIZE - 1) / BLOCK_SIZE);
+        index_(index), length_(length), hash_(hash), blocks_((length + BLOCK_SIZE - 1) / BLOCK_SIZE), isRetrieved_(blocks_.size()) {
     for (int i = 0; i < blocks_.size(); i++) {
         blocks_[i].piece = index_;
         blocks_[i].offset = i * BLOCK_SIZE;
@@ -20,8 +19,8 @@ Piece::Piece(size_t index, size_t length, std::string hash) :
     }
 }
 
-const Block& Piece::GetFirstMissingBlock() {
-    return blocks_[retrievedCount_];
+const std::vector<Block>& Piece::GetBlocks() {
+    return blocks_;
 }
 
 size_t Piece::GetIndex() const {
@@ -30,8 +29,10 @@ size_t Piece::GetIndex() const {
 
 void Piece::SaveBlock(size_t blockOffset, std::string data) {
     blocks_[blockOffset / BLOCK_SIZE].data = data;
-    if (blockOffset / BLOCK_SIZE == retrievedCount_)
+    if (!isRetrieved_[blockOffset / BLOCK_SIZE]) {
+        isRetrieved_[blockOffset / BLOCK_SIZE] = true;
         retrievedCount_++;
+    }
 }
 
 bool Piece::AllBlocksRetrieved() const {
@@ -63,6 +64,7 @@ void Piece::Reset() {
     for (Block& block : blocks_)
         block.data = "";
     retrievedCount_ = 0;
+    isRetrieved_.assign(isRetrieved_.size(), false);
 }
 
 bool Piece::Validate() {

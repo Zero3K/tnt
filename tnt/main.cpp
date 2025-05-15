@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
 
     PieceStorage pieceStorage(file);
 
-    ThreadPool pool(32);
+    ThreadPool pool(50);
     DownloadManager manager(pool, peers, pieceStorage, file.infoHash);
     manager.Run();
     pool.Terminate(true);

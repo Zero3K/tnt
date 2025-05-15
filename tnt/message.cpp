@@ -22,6 +22,15 @@ Message Message::Init(Message::Id id, const std::string& payload) {
     };
 }
 
+Message Message::InitRequest(size_t pieceIndex, size_t blockOffset, size_t blockLength) {
+    std::string payload(12, 0);
+    *reinterpret_cast<uint32_t*>(&payload[0]) = htonl(static_cast<uint32_t>(pieceIndex));
+    *reinterpret_cast<uint32_t*>(&payload[4]) = htonl(static_cast<uint32_t>(blockOffset));
+    *reinterpret_cast<uint32_t*>(&payload[8]) = htonl(static_cast<uint32_t>(blockLength));
+
+    return Message::Init(Message::Id::Request, payload);
+}
+
 std::string Message::ToString() const {
     std::string result;
 

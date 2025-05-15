@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/poll.h>
+#include <netinet/tcp.h>
 
 
 TcpConnection::TcpConnection(std::string ip, int port, std::chrono::milliseconds connectTimeout, std::chrono::milliseconds readTimeout) :
@@ -30,6 +31,13 @@ void TcpConnection::EstablishConnection() {
 
     setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &tvRead, sizeof(tvRead));
     setsockopt(sock_, SOL_SOCKET, SO_SNDTIMEO, &tvRead, sizeof(tvRead));
+
+    char flag = 1;
+    setsockopt(sock_, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
+
+    int buf = 131072 * 8;
+    setsockopt(sock_, SOL_SOCKET, SO_RCVBUF, &buf, sizeof(buf));
+    setsockopt(sock_, SOL_SOCKET, SO_SNDBUF, &buf, sizeof(buf));
 
     sockaddr_in addr {
         .sin_family = AF_INET,

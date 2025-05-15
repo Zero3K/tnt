@@ -18,9 +18,12 @@ public:
 
     // Send message to a peer.
     void SendMessage(const Message& msg) const;
+    void SendRaw(std::string raw) const {
+        socket_.SendData(raw);
+    }
 
     // Recieve message from a peer.
-    std::optional<Message> RecieveMessage() const;
+    Message RecieveMessage() const;
 
     // Close connection to peer.
     void CloseConnection();

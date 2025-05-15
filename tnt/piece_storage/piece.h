@@ -18,8 +18,8 @@ class Piece {
 public:
     Piece(size_t index, size_t length, std::string hash);
 
-    // Returns reference to the first still unretrieved block.
-    const Block& GetFirstMissingBlock();
+    // Returns reference to the block list.
+    const std::vector<Block>& GetBlocks();
 
     // Saves bytes passed in `data` with offset equal to `blockOffset`.
     void SaveBlock(size_t blockOffset, std::string data);
@@ -30,9 +30,9 @@ public:
 
     // Returns piece index.
     size_t GetIndex() const;
-private:
 
     bool AllBlocksRetrieved() const;
+private:
 
     std::string GetData() const;
 
@@ -43,5 +43,6 @@ private:
     const size_t index_, length_;
     const std::string hash_;
     std::vector<Block> blocks_;
-    size_t retrievedCount_;
+    std::vector<bool> isRetrieved_;
+    size_t retrievedCount_ = 0;
 };
