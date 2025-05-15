@@ -3,6 +3,8 @@
 #include "torrent_file/types.h"
 #include "torrent_tracker.h"
 #include "peer_connection.h"
+#include "thread_pool.h"
+#include "download_manager/download_manager.h"
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -36,24 +38,10 @@ int main(int argc, char **argv) {
 
     PieceStorage pieceStorage(file);
 
-    std::vector<std::thread> threads;
-    for (const Peer& peer : peers) {
-        auto worker = [&]() {
-            // std::cout << "trying to reach " << peer.ip << ":" << peer.port << "... " << std::flush;
-            try {
-                PeerConnection conn(peer, file, "TEST0APP1DONT2WORRY3", pieceStorage);
-                conn.Run();
-                conn.Terminate();
-            } catch (...) {
-
-            }
-        };
-
-        threads.emplace_back(worker);
-    }
-
-    for (auto& t : threads)
-        t.join();
+    ThreadPool pool(32);
+    DownloadManager manager(pool, peers, pieceStorage, file.infoHash);
+    manager.Run();
+    pool.Terminate(true);
 
     return 0;
 }

@@ -7,7 +7,7 @@ using namespace std::chrono_literals;
 
 class TcpConnection {
 public:
-    TcpConnection(std::string ip, int port, std::chrono::milliseconds connectTimeout = 1000ms, std::chrono::milliseconds readTimeout = 1000ms);
+    TcpConnection(std::string ip, int port, std::chrono::milliseconds connectTimeout = 10000ms, std::chrono::milliseconds readTimeout = 10000ms);
     ~TcpConnection();
 
     // Establish connection.

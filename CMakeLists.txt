@@ -37,7 +37,8 @@ target_link_libraries(
     torrent_tracker PRIVATE cpr::cpr
 )
 add_library(tcp_connection
-    tnt/tcp_connection.cpp
+    tnt/tcp_connection/tcp_connection.cpp
+    tnt/tcp_connection/exception.h
 )
 add_library(peer_connection
     tnt/peer_connection.cpp
@@ -47,6 +48,9 @@ add_library(peer_connection
 add_library(piece_storage
     tnt/piece_storage/piece.cpp
     tnt/piece_storage/piece_storage.cpp
+)
+add_library(download_manager
+    tnt/download_manager/download_manager.cpp
 )
 
 add_executable(${PROJECT_NAME} tnt/main.cpp)
@@ -62,4 +66,5 @@ target_link_libraries(
     tcp_connection
     peer_connection
     piece_storage
+    download_manager
 )

@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include <optional>
+#include <chrono>
 
 
 using namespace std::chrono_literals;
@@ -14,6 +15,10 @@ using namespace std::chrono_literals;
 
 PeerConnection::PeerConnection(const Peer& peer, std::string selfId, std::string hash) 
     : peer_(peer), selfId_(selfId), hash_(hash), socket_(peer.ip, peer.port) {}
+
+PeerConnection::~PeerConnection() {
+    socket_.CloseConnection();
+}
 
 void PeerConnection::PerformHandshake() {    
     std::string proto = "BitTorrent protocol";
