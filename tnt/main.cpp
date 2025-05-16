@@ -38,10 +38,46 @@ int main(int argc, char **argv) {
 
     PieceStorage pieceStorage(file);
 
-    ThreadPool pool(50);
-    DownloadManager manager(pool, peers, pieceStorage, file.infoHash);
-    manager.Run();
-    pool.Terminate(true);
+    std::vector<std::thread> threads;
+    std::vector<DownloadManager> mngs;
+    // very shitty, i'll fix that i promise
+    for (auto peer : peers) {
+        threads.emplace_back([&]() {
+            std::atomic<int> cnt = 2;
+
+            auto mng = DownloadManager(peer, pieceStorage, file.infoHash);
+            try {
+                mng.EstablishConnection();
+                // mng.ReceiveLoop();
+                threads.emplace_back([&]() {
+                    try {
+                        mng.ReceiveLoop();
+                    } catch (std::runtime_error& exc) {
+                        std::cout << "recv loop failed, terminating... " << exc.what() << std::endl;
+                        mng.Terminate();
+                        cnt--;
+                    }
+                });
+                threads.emplace_back([&]() {
+                    try {
+                        mng.SendLoop();
+                    } catch (std::runtime_error& exc) {
+                        std::cout << "send loop failed, terminating... " << exc.what() << std::endl;
+                        mng.Terminate();
+                        cnt--;
+                    }
+                });
+                cnt.wait(2);
+                cnt.wait(1);
+                mng.Terminate();
+            } catch (std::runtime_error& exc) {
+                std::cout << "connect failed... " << exc.what() << std::endl;
+            }
+        });
+    }
+    
+    for (auto& t : threads)
+        t.join();
 
     return 0;
 }

@@ -35,7 +35,7 @@ void TcpConnection::EstablishConnection() {
     char flag = 1;
     setsockopt(sock_, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
 
-    int buf = 131072 * 8;
+    int buf = 131072 * 16;
     setsockopt(sock_, SOL_SOCKET, SO_RCVBUF, &buf, sizeof(buf));
     setsockopt(sock_, SOL_SOCKET, SO_SNDBUF, &buf, sizeof(buf));
 

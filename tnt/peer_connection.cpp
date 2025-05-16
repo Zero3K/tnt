@@ -14,7 +14,7 @@ using namespace std::chrono_literals;
 
 
 PeerConnection::PeerConnection(const Peer& peer, std::string selfId, std::string hash) 
-    : peer_(peer), selfId_(selfId), hash_(hash), socket_(peer.ip, peer.port, 1s, 10s) {}
+    : peer_(peer), selfId_(selfId), hash_(hash), socket_(peer.ip, peer.port, 1s, 4s) {}
 
 PeerConnection::~PeerConnection() {
     socket_.CloseConnection();

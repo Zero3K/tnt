@@ -8,19 +8,21 @@
 
 class DownloadManager {
 public:
-    explicit DownloadManager(ThreadPool& threadPool, std::vector<Peer> peers, PieceStorage& storage, std::string hash);
+    explicit DownloadManager(Peer peer, PieceStorage& storage, std::string hash);
 
-    void Run();
-
+    void ReceiveLoop();
+    void SendLoop();
+    void EstablishConnection();
+    void Terminate();
 private:
-    void EstablishConnections();
-    void StartDownloading();
-    void RequestBlocksForPiece(PeerConnection& con, std::shared_ptr<Piece> piece);
-    void DownloadLoop();
+    void RequestBlocksForPiece(std::shared_ptr<Piece> piece);
 
-    ThreadPool& threadPool_;
     mutable std::mutex mtx_;
-    std::vector<PeerConnection> cons_;
-    std::set<PeerConnection*> availableCons_;
+    PeerConnection con_;
     PieceStorage& storage_;
+
+    std::set<std::shared_ptr<Piece>> requestedPieces_;
+
+    std::atomic<bool> choked_ = true;
+    std::atomic<bool> terminated_ = false;
 };
