@@ -20,13 +20,7 @@ void DownloadManager::EstablishConnection() {
 void DownloadManager::RequestBlocksForPiece(std::shared_ptr<Piece> piece) {
     for (size_t j = 0; j < piece->GetBlocks().size(); j++) {
         auto& block = piece->GetBlocks()[j];
-
-        std::string payload(12, 0);
-        *reinterpret_cast<uint32_t*>(&payload[0]) = htonl(static_cast<uint32_t>(piece->GetIndex()));
-        *reinterpret_cast<uint32_t*>(&payload[4]) = htonl(static_cast<uint32_t>(block.offset));
-        *reinterpret_cast<uint32_t*>(&payload[8]) = htonl(static_cast<uint32_t>(block.length));
-
-        con_.SendMessage(Message::Init(Message::Id::Request, payload));
+        con_.SendMessage(Message::InitRequest(piece->GetIndex(), block.offset, block.length));
     }
 }
 
@@ -51,25 +45,31 @@ void DownloadManager::SendLoop() {
 
 void DownloadManager::ReceiveLoop() {
     recvRunning_ = true;
-    while (!storage_->AllPiecesGood() && !terminating_) {
-        Message msg = con_.RecieveMessage();
 
-        if (msg.id == Message::Id::Unchoke) {
-            choked_ = false;
-            choked_.notify_one();
-        } else if (msg.id == Message::Id::Piece) {
-            uint32_t pieceIndex = ntohl(*reinterpret_cast<const uint32_t*>(&msg.payload[0]));
-            uint32_t blockOffset = ntohl(*reinterpret_cast<const uint32_t*>(&msg.payload[4]));
-            std::string data = msg.payload.substr(8);
+    try {
+        while (!storage_->AllPiecesGood() && !terminating_) {
+            Message msg = con_.RecieveMessage();
+            if (msg.id == Message::Id::Unchoke) {
+                choked_ = false;
+                choked_.notify_one();
+            } else if (msg.id == Message::Id::Piece) {
+                uint32_t pieceIndex = ntohl(*reinterpret_cast<const uint32_t*>(&msg.payload[0]));
+                uint32_t blockOffset = ntohl(*reinterpret_cast<const uint32_t*>(&msg.payload[4]));
+                std::string data = msg.payload.substr(8);
 
-            auto piece = storage_->GetPiece(pieceIndex);
-            storage_->GetPiece(pieceIndex)->SaveBlock(blockOffset, data);
+                auto piece = storage_->GetPiece(pieceIndex);
+                storage_->GetPiece(pieceIndex)->SaveBlock(blockOffset, data);
 
-            requestedPieces_.erase(piece);
-            if (piece->Validate()) {
-                storage_->PieceProcessed(piece);
+                requestedPieces_.erase(piece);
+                if (piece->Validate()) {
+                    storage_->PieceProcessed(piece);
+                }
             }
         }
+    } catch (std::runtime_error& exc) {
+        recvRunning_ = false;
+        recvRunning_.notify_one();
+        throw exc;
     }
 
     recvRunning_ = false;
@@ -77,9 +77,11 @@ void DownloadManager::ReceiveLoop() {
 }
 
 void DownloadManager::Terminate() {
+    if (terminating_)
+        return;
     terminating_ = true;
-    sendRunning_.wait(true);
-    recvRunning_.wait(true);
+    // sendRunning_.wait(true);
+    // recvRunning_.wait(true);
     // std::cout << "terminated!\n";
     con_.CloseConnection();
 }

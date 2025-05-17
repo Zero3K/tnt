@@ -1,8 +1,8 @@
 #include "peer_connection.h"
-#include "tcp_connection/exception.h"
+#include "../tcp_connection/exception.h"
 #include "message.h"
-#include "piece_storage/piece_storage.h"
-#include "torrent_file/types.h"
+#include "../piece_storage/piece_storage.h"
+#include "../torrent_file/types.h"
 #include <iostream>
 #include <sys/wait.h>
 #include <netinet/in.h>
@@ -12,9 +12,8 @@
 
 using namespace std::chrono_literals;
 
-
 PeerConnection::PeerConnection(const Peer& peer, std::string selfId, std::string hash) 
-    : peer_(peer), selfId_(selfId), hash_(hash), socket_(peer.ip, peer.port, 300ms, 500ms) {}
+    : peer_(peer), selfId_(selfId), hash_(hash), socket_(peer.ip, peer.port, 1000ms, 5000ms) {}
 
 PeerConnection::~PeerConnection() {
     socket_.CloseConnection();

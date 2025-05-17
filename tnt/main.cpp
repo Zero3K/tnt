@@ -2,8 +2,9 @@
 #include "torrent_file/parser.h"
 #include "torrent_file/types.h"
 #include "torrent_tracker.h"
-#include "peer_connection.h"
+#include "peer_connection/peer_connection.h"
 #include "download_manager/download_manager.h"
+#include <cxxopts.hpp>
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -14,12 +15,17 @@
 using namespace std::chrono_literals;
 
 int main(int argc, char **argv) {
-    std::cout << "insert torrent file path here: ";
-    std::string path;
-    std::cin >> path;
+    cxxopts::Options options("tnt", "Toy torrent client");
+    options.add_options()
+        ("file", "Metainfo (.torrent) file.", cxxopts::value<std::string>());
 
+    options.parse_positional({"file"});
+    auto result = options.parse(argc, argv);
+
+    std::string torrentFilePath = result["file"].as<std::string>();
+    
     TorrentFile file;
-    std::ifstream stream(path);
+    std::ifstream stream(torrentFilePath);
     stream >> file;
 
     std::cout << "brief:" << std::endl;
@@ -54,33 +60,39 @@ int main(int argc, char **argv) {
     for (auto peer : peers) {
         if (pieceStorage.AllPiecesGood())
             break;
+        threads.emplace_back([&]() {
+            while (!pieceStorage.AllPiecesGood()) {
+                auto mng = DownloadManager(peer, pieceStorage, file.infoHash);
+                try {
+                    mng.EstablishConnection();
+                } catch (std::runtime_error& exc) {
+                    // std::cout << "connect failed... " << exc.what() << std::endl;;
+                    mng.Terminate();
+                    break;
+                }
 
-        mngs.push_back(new DownloadManager(peer, pieceStorage, file.infoHash));
-        auto &mng = *mngs.back();
-        try {
-            mng.EstablishConnection();
-        } catch (std::runtime_error& exc) {
-            // std::cout << "connect failed... " << exc.what() << std::endl;;
-            mng.Terminate();
-            continue;
-        }
-
-        threads.emplace_back([&mng, &pieceStorage]() {
-            try {
-                mng.ReceiveLoop();
-            } catch (std::runtime_error& exc) {
-                // std::cout << "recv loop failed, terminating... " << exc.what() << std::endl;
-                mng.Terminate();
+                auto t1 = std::thread([&mng, &pieceStorage]() {
+                    try {
+                        mng.ReceiveLoop();
+                    } catch (std::runtime_error& exc) {
+                        // std::cout << "recv loop failed, terminating... " << exc.what() << std::endl;
+                    }
+                    mng.Terminate();
+                });
+                auto t2 = std::thread([&mng, &pieceStorage]() {
+                    try {
+                        mng.SendLoop();
+                    } catch (std::runtime_error& exc) {
+                        // std::cout << "send loop failed, terminating... " << exc.what() << std::endl;
+                    }
+                    mng.Terminate();
+                });
+                t1.join();
+                t2.join();
+                // std::cout << "reconnect\n";
             }
         });
-        threads.emplace_back([&mng, &pieceStorage]() {
-            try {
-                mng.SendLoop();
-            } catch (std::runtime_error& exc) {
-                // std::cout << "send loop failed, terminating... " << exc.what() << std::endl;
-                mng.Terminate();
-            }
-        });
+        std::this_thread::sleep_for(300ms);
     }
 
     for (auto* ptr : mngs)

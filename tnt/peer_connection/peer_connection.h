@@ -1,9 +1,9 @@
 #pragma once
 
-#include "piece_storage/piece_storage.h"
-#include "tcp_connection/tcp_connection.h"
-#include "torrent_tracker.h"
-#include "torrent_file/types.h"
+#include "../piece_storage/piece_storage.h"
+#include "../tcp_connection/tcp_connection.h"
+#include "../torrent_tracker.h"
+#include "../torrent_file/types.h"
 #include "message.h"
 #include <memory>
 

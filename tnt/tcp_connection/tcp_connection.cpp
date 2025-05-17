@@ -119,10 +119,8 @@ std::string TcpConnection::ReceiveData(size_t bufferSize) const {
         result.resize(4);
 
         int sz = recv(sock_, &result[0], 4, MSG_WAITALL);
-        if (0 <= sz && sz < 4)
+        if (sz < 4)
             throw TcpTimeoutError();
-        else if (sz < -1)
-            throw TcpError("str len");
         bufferSize = ntohl(*reinterpret_cast<uint32_t*>(&result[0]));
 
         if (bufferSize == 0)

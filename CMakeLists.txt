@@ -21,6 +21,15 @@ FetchContent_Declare(cpr
 )
 FetchContent_MakeAvailable(cpr)
 
+# cxxopts
+FetchContent_Declare(
+  cxxopts
+  GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
+  GIT_TAG        v3.2.0
+)
+
+FetchContent_MakeAvailable(cxxopts)
+
 # |-------------------------------------------------
 
 add_library(bencode 
@@ -41,9 +50,9 @@ add_library(tcp_connection
     tnt/tcp_connection/exception.h
 )
 add_library(peer_connection
-    tnt/peer_connection.cpp
-    tnt/message.h
-    tnt/message.cpp
+    tnt/peer_connection/peer_connection.cpp
+    tnt/peer_connection/message.h
+    tnt/peer_connection/message.cpp
 )
 add_library(piece_storage
     tnt/piece_storage/piece.cpp
@@ -59,6 +68,7 @@ target_link_libraries(
     ${PROJECT_NAME} 
     cpr::cpr 
     ${OPENSSL_LIBRARIES}
+    cxxopts
 
     bencode 
     torrent_file 
