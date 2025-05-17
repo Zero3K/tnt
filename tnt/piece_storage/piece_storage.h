@@ -21,10 +21,12 @@ public:
     void PieceProcessed(std::shared_ptr<Piece> piece);
 
     bool AllPiecesGood() const;
+
+    int GetProcessedCount() const;
 private:
     std::set<std::pair<std::chrono::time_point<std::chrono::steady_clock>, std::shared_ptr<Piece>>> pendingPieces_;
     std::vector<std::chrono::time_point<std::chrono::steady_clock>> acquireTimes_;
     std::vector<std::shared_ptr<Piece>> allPieces_;
     mutable std::mutex mtx_;
-    size_t goodCount_ = 0;
+    std::atomic<int> goodCount_ = 0;
 };

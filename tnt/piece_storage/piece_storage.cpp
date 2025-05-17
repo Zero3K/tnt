@@ -51,6 +51,11 @@ void PieceStorage::PieceProcessed(std::shared_ptr<Piece> piece) {
     std::lock_guard lock(mtx_);
     if (pendingPieces_.find({ acquireTimes_[piece->GetIndex()], piece }) != pendingPieces_.end()) {
         pendingPieces_.erase({ acquireTimes_[piece->GetIndex()], piece });
-        std::cout << "piece " << piece->GetIndex() << " processed by thread " << std::this_thread::get_id() << std::endl;
+        goodCount_++;
+        // std::cout << "piece " << piece->GetIndex() << " processed by thread " << std::this_thread::get_id() << std::endl;
     }
+}
+
+int PieceStorage::GetProcessedCount() const {
+    return goodCount_;
 }

@@ -37,9 +37,18 @@ int main(int argc, char **argv) {
 
     PieceStorage pieceStorage(file);
 
+    std::mutex mtx;
     std::vector<std::thread> threads;
     std::vector<DownloadManager*> mngs;
     
+    threads.emplace_back([&]() {
+        std::cout << '\n';
+        while (!pieceStorage.AllPiecesGood()) {
+            std::this_thread::sleep_for(100ms);
+            std::cout << "\rpieces retrieved: " << pieceStorage.GetProcessedCount() << std::flush;
+        }
+        std::cout << "\n";
+    });
 
     // very shitty, i'll fix that, i promise
     for (auto peer : peers) {
@@ -51,41 +60,34 @@ int main(int argc, char **argv) {
         try {
             mng.EstablishConnection();
         } catch (std::runtime_error& exc) {
-            std::cout << "connect failed... " << exc.what() << std::endl;
+            // std::cout << "connect failed... " << exc.what() << std::endl;;
+            mng.Terminate();
             continue;
         }
 
-        threads.emplace_back([&mng]() {
+        threads.emplace_back([&mng, &pieceStorage]() {
             try {
                 mng.ReceiveLoop();
             } catch (std::runtime_error& exc) {
-                std::cout << "recv loop failed, terminating... " << exc.what() << std::endl;
+                // std::cout << "recv loop failed, terminating... " << exc.what() << std::endl;
                 mng.Terminate();
             }
         });
-        threads.emplace_back([&mng]() {
+        threads.emplace_back([&mng, &pieceStorage]() {
             try {
                 mng.SendLoop();
             } catch (std::runtime_error& exc) {
-                std::cout << "send loop failed, terminating... " << exc.what() << std::endl;
+                // std::cout << "send loop failed, terminating... " << exc.what() << std::endl;
                 mng.Terminate();
             }
         });
     }
-    
-    while (!pieceStorage.AllPiecesGood()) {
-        std::this_thread::sleep_for(100ms);
-    }
-
-    std::cout << "finished\n";
 
     for (auto* ptr : mngs)
         ptr->Terminate();
 
     for (auto& t : threads)
         t.join();
-
-    std::cout << "storage state: " << pieceStorage.AllPiecesGood() << "\n";
 
     return 0;
 }

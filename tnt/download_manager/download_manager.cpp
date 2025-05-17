@@ -8,13 +8,13 @@
 
 using namespace std::chrono_literals;
 
-DownloadManager::DownloadManager(Peer peer, PieceStorage& storage, std::string hash) : storage_(&storage), con_(peer, "TEST1APP2DONT3WORRY4", hash) {
+DownloadManager::DownloadManager(Peer peer, PieceStorage& storage, std::string hash) : storage_(&storage), con_(peer, "TEST1APP2DONT3WORRY6", hash) {
 
 }
 
 void DownloadManager::EstablishConnection() {
     con_.EstablishConnection();
-    std::cout << "Connection established!" << std::endl;
+    // std::cout << "Connection established!" << std::endl;
 }
 
 void DownloadManager::RequestBlocksForPiece(std::shared_ptr<Piece> piece) {
@@ -52,13 +52,7 @@ void DownloadManager::SendLoop() {
 void DownloadManager::ReceiveLoop() {
     recvRunning_ = true;
     while (!storage_->AllPiecesGood() && !terminating_) {
-        Message msg;
-        try {
-            msg = con_.RecieveMessage();
-        } catch (TcpTimeoutError& exc) {
-            std::this_thread::sleep_for(100ms);
-            continue;
-        }
+        Message msg = con_.RecieveMessage();
 
         if (msg.id == Message::Id::Unchoke) {
             choked_ = false;
@@ -86,6 +80,6 @@ void DownloadManager::Terminate() {
     terminating_ = true;
     sendRunning_.wait(true);
     recvRunning_.wait(true);
-    std::cout << "terminated!\n";
+    // std::cout << "terminated!\n";
     con_.CloseConnection();
 }
