@@ -39,10 +39,6 @@ std::shared_ptr<Piece> PieceStorage::AcquirePiece() {
     }
 }
 
-std::shared_ptr<Piece> PieceStorage::GetPiece(size_t idx) {
-    return allPieces_[idx];
-}
-
 bool PieceStorage::AllPiecesGood() const {
     return pendingPieces_.empty();
 }

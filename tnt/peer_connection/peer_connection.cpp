@@ -13,7 +13,7 @@
 using namespace std::chrono_literals;
 
 PeerConnection::PeerConnection(const Peer& peer, std::string selfId, std::string hash) 
-    : peer_(peer), selfId_(selfId), hash_(hash), socket_(peer.ip, peer.port, 1000ms, 5000ms) {}
+    : peer_(peer), selfId_(selfId), hash_(hash), socket_(peer.ip, peer.port, 1000ms, 10000ms) {}
 
 PeerConnection::~PeerConnection() {
     socket_.CloseConnection();
@@ -43,6 +43,7 @@ void PeerConnection::PerformHandshake() {
     std::string suf = socket_.ReceiveData(48);
 
     peerId_ = suf.substr(28);
+    
 }
 
 void PeerConnection::EstablishConnection() {

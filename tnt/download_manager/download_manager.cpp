@@ -32,7 +32,7 @@ void DownloadManager::SendLoop() {
                 auto piece = storage_->AcquirePiece();
                 if (piece != nullptr) {
                     RequestBlocksForPiece(piece);
-                    requestedPieces_.insert(piece);
+                    requestedPieces_[piece->GetIndex()] = piece;
                 }
             }
 
@@ -57,12 +57,16 @@ void DownloadManager::ReceiveLoop() {
                 uint32_t blockOffset = ntohl(*reinterpret_cast<const uint32_t*>(&msg.payload[4]));
                 std::string data = msg.payload.substr(8);
 
-                auto piece = storage_->GetPiece(pieceIndex);
-                storage_->GetPiece(pieceIndex)->SaveBlock(blockOffset, data);
+                auto it = requestedPieces_.find(pieceIndex);
+                if (it == requestedPieces_.end())
+                    continue;
+                auto piece = it->second;
+                piece->SaveBlock(blockOffset, data);
 
-                requestedPieces_.erase(piece);
-                if (piece->Validate()) {
-                    storage_->PieceProcessed(piece);
+                if (piece->AllBlocksRetrieved()) {
+                    requestedPieces_.erase(pieceIndex);
+                    if (piece->Validate())
+                        storage_->PieceProcessed(piece);
                 }
             }
         }

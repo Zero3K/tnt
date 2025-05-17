@@ -16,8 +16,6 @@ public:
 
     std::shared_ptr<Piece> AcquirePiece();
 
-    std::shared_ptr<Piece> GetPiece(size_t idx);
-
     void PieceProcessed(std::shared_ptr<Piece> piece);
 
     bool AllPiecesGood() const;

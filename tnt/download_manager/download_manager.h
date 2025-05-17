@@ -20,7 +20,7 @@ private:
     PeerConnection con_;
     PieceStorage* storage_;
 
-    std::set<std::shared_ptr<Piece>> requestedPieces_;
+    std::unordered_map<int, std::shared_ptr<Piece>> requestedPieces_;
 
     std::atomic<bool> choked_ = true;
     std::atomic<bool> terminating_ = false;

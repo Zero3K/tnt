@@ -61,14 +61,20 @@ int main(int argc, char **argv) {
         if (pieceStorage.AllPiecesGood())
             break;
         threads.emplace_back([&]() {
+            int sec = 2;
             while (!pieceStorage.AllPiecesGood()) {
                 auto mng = DownloadManager(peer, pieceStorage, file.infoHash);
                 try {
                     mng.EstablishConnection();
+                    sec = 2;
                 } catch (std::runtime_error& exc) {
-                    // std::cout << "connect failed... " << exc.what() << std::endl;;
+                    std::cout << "connect failed... " << exc.what() << std::endl;;
                     mng.Terminate();
-                    break;
+                    if (sec > 8)
+                        break;
+                    std::this_thread::sleep_for(sec * 1s);
+                    sec *= 2;
+                    continue;
                 }
 
                 auto t1 = std::thread([&mng, &pieceStorage]() {
