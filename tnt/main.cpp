@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
                     mng.EstablishConnection();
                     sec = 2;
                 } catch (std::runtime_error& exc) {
-                    std::cout << "connect failed... " << exc.what() << std::endl;;
+                    // std::cout << "connect failed... " << exc.what() << std::endl;;
                     mng.Terminate();
                     if (sec > 8)
                         break;
