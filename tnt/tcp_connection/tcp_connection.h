@@ -8,6 +8,13 @@ using namespace std::chrono_literals;
 class TcpConnection {
 public:
     TcpConnection(std::string ip, int port, std::chrono::milliseconds connectTimeout = 10000ms, std::chrono::milliseconds readTimeout = 10000ms);
+
+    TcpConnection(TcpConnection&& other);
+    TcpConnection(const TcpConnection& other);
+
+    TcpConnection& operator=(TcpConnection&& other);
+    TcpConnection& operator=(const TcpConnection& other);
+
     ~TcpConnection();
 
     // Establish connection.
@@ -22,8 +29,8 @@ public:
     // Close connection.
     void CloseConnection();
 private:
-    const std::string ip_;
-    const int port_;
+    std::string ip_;
+    int port_;
     std::chrono::milliseconds connectTimeout_, readTimeout_;
-    int sock_;
+    int sock_ = -1;
 };

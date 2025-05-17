@@ -1,12 +1,14 @@
 #include "download_manager.h"
+#include "../tcp_connection/exception.h"
 #include <memory>
 #include <iostream>
 #include <utility>
+#include <thread>
 #include <arpa/inet.h>
 
 using namespace std::chrono_literals;
 
-DownloadManager::DownloadManager(Peer peer, PieceStorage& storage, std::string hash) : storage_(storage), con_(peer, "TEST1APP2DONT3WORRY4", hash) {
+DownloadManager::DownloadManager(Peer peer, PieceStorage& storage, std::string hash) : storage_(&storage), con_(peer, "TEST1APP2DONT3WORRY4", hash) {
 
 }
 
@@ -29,29 +31,35 @@ void DownloadManager::RequestBlocksForPiece(std::shared_ptr<Piece> piece) {
 }
 
 void DownloadManager::SendLoop() {
-    std::cout << "started send! " << "\n";
-    while (!storage_.AllPiecesGood() && !terminated_) {
-        choked_.wait(true);
-        while (requestedPieces_.empty()) {
-            for (int i = 0; i < 15; i++) {
-                auto piece = storage_.GetNextPieceToDownload();
+    recvRunning_ = true;
+    while (!storage_->AllPiecesGood() && !terminating_) {
+        if (!choked_)
+            while (requestedPieces_.size() < 15 && !storage_->AllPiecesGood()) {
+                auto piece = storage_->AcquirePiece();
                 if (piece != nullptr) {
                     RequestBlocksForPiece(piece);
                     requestedPieces_.insert(piece);
                 }
             }
-        }
 
         std::this_thread::sleep_for(15ms);
     }
-    std::cout << "ended send\n";
+
+    sendRunning_ = false;
+    sendRunning_.notify_one();
 }
 
 void DownloadManager::ReceiveLoop() {
-    std::cout << "started recv! " << "\n";
-    while (!storage_.AllPiecesGood() && !terminated_) {
-        Message msg = con_.RecieveMessage();
-        // std::cout << "got " << int(mcsg.id) << std::endl;
+    recvRunning_ = true;
+    while (!storage_->AllPiecesGood() && !terminating_) {
+        Message msg;
+        try {
+            msg = con_.RecieveMessage();
+        } catch (TcpTimeoutError& exc) {
+            std::this_thread::sleep_for(100ms);
+            continue;
+        }
+
         if (msg.id == Message::Id::Unchoke) {
             choked_ = false;
             choked_.notify_one();
@@ -60,20 +68,24 @@ void DownloadManager::ReceiveLoop() {
             uint32_t blockOffset = ntohl(*reinterpret_cast<const uint32_t*>(&msg.payload[4]));
             std::string data = msg.payload.substr(8);
 
-            auto piece = storage_.GetPiece(pieceIndex);
-            storage_.GetPiece(pieceIndex)->SaveBlock(blockOffset, data);
+            auto piece = storage_->GetPiece(pieceIndex);
+            storage_->GetPiece(pieceIndex)->SaveBlock(blockOffset, data);
 
+            requestedPieces_.erase(piece);
             if (piece->Validate()) {
-                storage_.PieceProcessed(piece);
-                requestedPieces_.erase(piece);
-            } else {
-                storage_.PieceFailed(piece);
+                storage_->PieceProcessed(piece);
             }
         }
     }
+
+    recvRunning_ = false;
+    recvRunning_.notify_one();
 }
 
 void DownloadManager::Terminate() {
+    terminating_ = true;
+    sendRunning_.wait(true);
+    recvRunning_.wait(true);
+    std::cout << "terminated!\n";
     con_.CloseConnection();
-    terminated_ = true;
 }

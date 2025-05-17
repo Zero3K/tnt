@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../peer_connection.h"
-#include "../thread_pool.h"
 #include <mutex>
 #include <set>
 
@@ -19,10 +18,12 @@ private:
 
     mutable std::mutex mtx_;
     PeerConnection con_;
-    PieceStorage& storage_;
+    PieceStorage* storage_;
 
     std::set<std::shared_ptr<Piece>> requestedPieces_;
 
     std::atomic<bool> choked_ = true;
-    std::atomic<bool> terminated_ = false;
+    std::atomic<bool> terminating_ = false;
+    std::atomic<bool> sendRunning_ = false;
+    std::atomic<bool> recvRunning_ = false;
 };

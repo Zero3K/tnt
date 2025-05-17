@@ -19,6 +19,34 @@ TcpConnection::~TcpConnection() {
     CloseConnection();
 }
 
+TcpConnection::TcpConnection(TcpConnection&& other) : ip_(other.ip_), port_(other.port_), connectTimeout_(other.connectTimeout_), readTimeout_(other.readTimeout_)  {
+
+}
+
+TcpConnection::TcpConnection(const TcpConnection& other) : ip_(other.ip_), port_(other.port_), connectTimeout_(other.connectTimeout_), readTimeout_(other.readTimeout_) {
+
+}
+
+TcpConnection& TcpConnection::operator=(TcpConnection&& other) {
+    std::swap(ip_, other.ip_);
+    std::swap(port_, other.port_);
+    std::swap(connectTimeout_, other.connectTimeout_);
+    std::swap(readTimeout_, other.readTimeout_);
+    std::swap(sock_, other.sock_);
+
+    return *this;
+}
+
+TcpConnection& TcpConnection::operator=(const TcpConnection& other) {
+    ip_ = other.ip_;
+    port_ = other.port_;
+    connectTimeout_ = other.connectTimeout_;
+    readTimeout_ = other.readTimeout_;
+    sock_ = -1;
+
+    return *this;
+}
+
 void TcpConnection::EstablishConnection() {
     sock_ = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_ == -1) {
@@ -35,7 +63,7 @@ void TcpConnection::EstablishConnection() {
     char flag = 1;
     setsockopt(sock_, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
 
-    int buf = 131072 * 16;
+    int buf = 131072 * 32;
     setsockopt(sock_, SOL_SOCKET, SO_RCVBUF, &buf, sizeof(buf));
     setsockopt(sock_, SOL_SOCKET, SO_SNDBUF, &buf, sizeof(buf));
 
@@ -90,8 +118,11 @@ std::string TcpConnection::ReceiveData(size_t bufferSize) const {
     if (bufferSize == 0) {
         result.resize(4);
 
-        if (recv(sock_, &result[0], 4, MSG_WAITALL) < 4)
-            throw std::runtime_error(std::string("recv failure while getting str len: ") + strerror(errno));
+        int sz = recv(sock_, &result[0], 4, MSG_WAITALL);
+        if (0 <= sz && sz < 4)
+            throw TcpTimeoutError();
+        else if (sz < -1)
+            throw TcpError("str len");
         bufferSize = ntohl(*reinterpret_cast<uint32_t*>(&result[0]));
 
         if (bufferSize == 0)
@@ -111,5 +142,5 @@ std::string TcpConnection::ReceiveData(size_t bufferSize) const {
 }
 
 void TcpConnection::CloseConnection() {
-    close(sock_);
+    shutdown(sock_, SHUT_RDWR);
 }

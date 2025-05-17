@@ -1,2 +1,3 @@
 # tnt
-`tnt` is a simple torrent client
+`tnt` is a simple torrent client.
+currently not finished.
