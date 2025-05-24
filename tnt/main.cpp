@@ -4,9 +4,8 @@
 #include "torrent_tracker.h"
 #include "peer_connection/peer_connection.h"
 #include "download_manager/download_manager.h"
+#include "codes.h"
 #include <cxxopts.hpp>
-#include <indicators/multi_progress.hpp>
-#include <indicators/progress_bar.hpp>
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -15,11 +14,15 @@
 #include <chrono>
 
 using namespace std::chrono_literals;
-using namespace indicators;
 namespace fs = std::filesystem;
 
 int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
+
+    std::cout.precision(1);
+    std::cout.setf(std::ios::fixed);
+
+    // =========================================================
 
     cxxopts::Options options("tnt", "tnt is a simple torrent client");
     options.add_options()
@@ -35,6 +38,8 @@ int main(int argc, char **argv) {
         std::cout << options.help() << std::endl;
         return 0;
     }
+
+    // =========================================================
 
     fs::path tfPath = result["file"].as<std::string>();
     fs::path outputFilePath = result["out"].as<std::string>();
@@ -59,87 +64,98 @@ int main(int argc, char **argv) {
     std::ofstream outputFile(outputFilePath);
     PieceStorage pieceStorage(file, outputFile);
 
-    std::mutex mtx;
-    std::vector<std::thread> threads;
-    std::vector<DownloadManager*> mngs;
-    
-    ProgressBar bar1{
-        option::BarWidth{50},
-        option::Start{"["},
-        option::Fill{"#"},
-        option::Lead{"#"},
-        option::Remainder{" "},
-        option::End{"]"},
-        option::ForegroundColor{Color::green},
-        option::ShowPercentage{true},
-        option::ShowElapsedTime{true},
-        option::ShowRemainingTime{true},
-        option::PrefixText{"downloading "},
-        option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
-    };
-    
-    indicators::MultiProgress<indicators::ProgressBar, 1> bars(bar1);
+    // =========================================================
 
-    auto progressBarJob = [&]() {
+    std::vector<std::thread> threads;
+
+    std::chrono::time_point tpStart = std::chrono::steady_clock::now();
+
+    std::atomic<int> connCnt = 0;
+    auto downloadProgressBarJob = [&]() {
+        std::cout << "\n\n\n";
         while (true) {
-            bars.set_progress<0>(pieceStorage.GetDownloadedCount() * 100 / file.pieceHashes.size());
-            if (bars.is_completed<0>())
+            int downloadedCnt = pieceStorage.GetDownloadedCount();
+            std::cout << MOVE_UP << MOVE_UP << RESET << "\r";
+
+            int progress = downloadedCnt * 50 / file.pieceHashes.size();
+            std::cout << CLEAR_LINE;
+            std::cout << BOLD << LIGHT_GRAY << "peers connected: " << YELLOW << connCnt << "\n";
+            std::cout << CLEAR_LINE;
+            std::cout << GREEN << "downloading... [";
+            
+            for (int i = 0; i < progress - 1; i++) 
+                std::cout << "=";
+            if (progress > 0 && progress != 50)
+                std::cout << ">";
+
+            for (int i = 0; i < 50 - progress; i++) 
+                std::cout << " ";
+            std::cout << "] " << downloadedCnt << "/" << file.pieceHashes.size() << " ";
+
+            std::chrono::time_point tpCur = std::chrono::steady_clock::now();
+
+            // TODO: rework
+            float avgSpeed = 1000.0 * downloadedCnt * file.pieceLength /
+                std::chrono::duration_cast<std::chrono::milliseconds>(tpCur - tpStart).count() / 1024 / 1024;
+            std::cout << avgSpeed << " MB/s\n";
+
+            if (progress == 50)
                 break;
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
     };
     
-    threads.emplace_back(progressBarJob);
+    threads.emplace_back(downloadProgressBarJob);
 
-    std::atomic<int> cnt = 0;
+    auto dmReceiveTask = [](DownloadManager& mng) {
+        try {
+            mng.ReceiveLoop();
+        } catch (std::runtime_error& exc) {
+            // ...
+        }
+    };
+
+    auto dmSendTask = [](DownloadManager& mng) {
+        try {
+            mng.SendLoop();
+        } catch (std::runtime_error& exc) {
+            // ...
+        }
+    };
+
+    auto downloadTask = [&](Peer peer) {
+        int attempts = 0;
+        while (!pieceStorage.AllPiecesDownloaded()) {
+            auto mng = DownloadManager(peer, pieceStorage, file.infoHash);
+            try {
+                mng.EstablishConnection();
+                attempts = 0;
+            } catch (std::runtime_error& exc) {
+                attempts++;
+                mng.Terminate();
+
+                if (attempts > 3)
+                    break;
+                continue;
+            }
+
+            connCnt++;
+
+            auto t1 = std::thread(dmReceiveTask, std::ref(mng));
+            auto t2 = std::thread(dmSendTask, std::ref(mng));
+
+            t1.join();
+            t2.join();
+
+            connCnt--;
+        }
+    };
 
     // very shitty, i'll fix that, i promise
     for (auto peer : peers) {
-        if (pieceStorage.AllPiecesDownloaded())
-            break;
-        threads.emplace_back([&]() {
-            int sec = 2;
-            while (!pieceStorage.AllPiecesDownloaded()) {
-                auto mng = DownloadManager(peer, pieceStorage, file.infoHash);
-                try {
-                    mng.EstablishConnection();
-                    cnt++;
-                    sec = 2;
-                } catch (std::runtime_error& exc) {
-                    // std::cout << "connect failed... " << exc.what() << std::endl;;
-                    mng.Terminate();
-                    if (sec > 8)
-                        break;
-                    std::this_thread::sleep_for(sec * 1s);
-                    sec *= 2;
-                    continue;
-                }
-
-                auto t1 = std::thread([&mng, &pieceStorage]() {
-                    try {
-                        mng.ReceiveLoop();
-                    } catch (std::runtime_error& exc) {
-                        // std::cout << "recv loop failed, terminating... " << exc.what() << std::endl;
-                    }
-                    mng.Terminate();
-                });
-                auto t2 = std::thread([&mng, &pieceStorage]() {
-                    try {
-                        mng.SendLoop();
-                    } catch (std::runtime_error& exc) {
-                        // std::cout << "send loop failed, terminating... " << exc.what() << std::endl;
-                    }
-                    mng.Terminate();
-                });
-                t1.join();
-                t2.join();
-            }
-        });
-        std::this_thread::sleep_for(300ms);
+        threads.emplace_back(downloadTask, peer);
+        std::this_thread::sleep_for(100ms);
     }
-
-    for (auto* ptr : mngs)
-        ptr->Terminate();
 
     for (auto& t : threads)
         t.join();
