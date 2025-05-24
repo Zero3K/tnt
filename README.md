@@ -19,10 +19,10 @@ make
 - `cpr` is used for making HTTP requests to trackers.
 
 ### Features to implement
-- [ ] Accept parameters from input args
-- [ ] Save downloaded pieces to disk
+- [x] Accept parameters from input args
+- [x] Save downloaded pieces to disk
 - [ ] Don't download already saved parts of file
-- [ ] Reconnect to peers after spontaneous disconnect (with dynamic retry time)
+- [x] Reconnect to peers after spontaneous disconnect
 - [ ] Keep track of peers pieces availabilty 
 - [ ] Dynamic piece wait time? (it's the time which storage piece waits before returning piece to pool)
 - [ ] Move piece acquiring logic to separate class? 

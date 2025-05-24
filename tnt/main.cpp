@@ -5,6 +5,8 @@
 #include "peer_connection/peer_connection.h"
 #include "download_manager/download_manager.h"
 #include <cxxopts.hpp>
+#include <indicators/multi_progress.hpp>
+#include <indicators/progress_bar.hpp>
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -13,27 +15,40 @@
 #include <chrono>
 
 using namespace std::chrono_literals;
+using namespace indicators;
+namespace fs = std::filesystem;
 
 int main(int argc, char **argv) {
-    cxxopts::Options options("tnt", "Toy torrent client");
+    signal(SIGPIPE, SIG_IGN);
+
+    cxxopts::Options options("tnt", "tnt is a simple torrent client");
     options.add_options()
+        ("h,help", "Print usage")
+        ("o,out", "Output file name.", cxxopts::value<std::string>())
         ("file", "Metainfo (.torrent) file.", cxxopts::value<std::string>());
 
     options.parse_positional({"file"});
     auto result = options.parse(argc, argv);
 
-    std::string torrentFilePath = result["file"].as<std::string>();
+    if (result.count("help")) {
+        options.positional_help("<torrent file>");
+        std::cout << options.help() << std::endl;
+        return 0;
+    }
+
+    fs::path tfPath = result["file"].as<std::string>();
+    fs::path outputFilePath = result["out"].as<std::string>();
     
     TorrentFile file;
-    std::ifstream stream(torrentFilePath);
+    std::ifstream stream(tfPath);
     stream >> file;
 
-    std::cout << "brief:" << std::endl;
-    std::cout << " - " << file.name << std::endl;
-    std::cout << " - " << file.announce << std::endl;
-    std::cout << " - " << file.comment << std::endl << std::endl;
-    std::cout << " - piece size: " << file.pieceLength << std::endl;
-    std::cout << " - pieces: " << file.pieceHashes.size() << std::endl << std::endl;
+    std::cout << "loading torrent file..." << std::endl;
+    std::cout << " - name: " << file.name << std::endl;
+    std::cout << " - announce: " << file.announce << std::endl;
+    std::cout << " - description: " << file.comment << std::endl;
+    // std::cout << " - piece size: " << file.pieceLength << std::endl;
+    // std::cout << " - pieces: " << file.pieceHashes.size() << std::endl << std::endl;
 
     std::cout << "getting peers..." << std::flush; 
     TorrentTracker tracker(file.announce);
@@ -41,31 +56,54 @@ int main(int argc, char **argv) {
     auto& peers = tracker.GetPeers();
     std::cout << " found " << peers.size() << " peers" << std::endl;
 
-    PieceStorage pieceStorage(file);
+    std::ofstream outputFile(outputFilePath);
+    PieceStorage pieceStorage(file, outputFile);
 
     std::mutex mtx;
     std::vector<std::thread> threads;
     std::vector<DownloadManager*> mngs;
     
-    threads.emplace_back([&]() {
-        std::cout << '\n';
-        while (!pieceStorage.AllPiecesGood()) {
-            std::this_thread::sleep_for(100ms);
-            std::cout << "\rpieces retrieved: " << pieceStorage.GetProcessedCount() << std::flush;
+    ProgressBar bar1{
+        option::BarWidth{50},
+        option::Start{"["},
+        option::Fill{"#"},
+        option::Lead{"#"},
+        option::Remainder{" "},
+        option::End{"]"},
+        option::ForegroundColor{Color::green},
+        option::ShowPercentage{true},
+        option::ShowElapsedTime{true},
+        option::ShowRemainingTime{true},
+        option::PrefixText{"downloading "},
+        option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
+    };
+    
+    indicators::MultiProgress<indicators::ProgressBar, 1> bars(bar1);
+
+    auto progressBarJob = [&]() {
+        while (true) {
+            bars.set_progress<0>(pieceStorage.GetDownloadedCount() * 100 / file.pieceHashes.size());
+            if (bars.is_completed<0>())
+                break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-        std::cout << "\n";
-    });
+    };
+    
+    threads.emplace_back(progressBarJob);
+
+    std::atomic<int> cnt = 0;
 
     // very shitty, i'll fix that, i promise
     for (auto peer : peers) {
-        if (pieceStorage.AllPiecesGood())
+        if (pieceStorage.AllPiecesDownloaded())
             break;
         threads.emplace_back([&]() {
             int sec = 2;
-            while (!pieceStorage.AllPiecesGood()) {
+            while (!pieceStorage.AllPiecesDownloaded()) {
                 auto mng = DownloadManager(peer, pieceStorage, file.infoHash);
                 try {
                     mng.EstablishConnection();
+                    cnt++;
                     sec = 2;
                 } catch (std::runtime_error& exc) {
                     // std::cout << "connect failed... " << exc.what() << std::endl;;
@@ -95,7 +133,6 @@ int main(int argc, char **argv) {
                 });
                 t1.join();
                 t2.join();
-                // std::cout << "reconnect\n";
             }
         });
         std::this_thread::sleep_for(300ms);

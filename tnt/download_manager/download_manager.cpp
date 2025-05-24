@@ -26,9 +26,10 @@ void DownloadManager::RequestBlocksForPiece(std::shared_ptr<Piece> piece) {
 
 void DownloadManager::SendLoop() {
     recvRunning_ = true;
-    while (!storage_->AllPiecesGood() && !terminating_) {
+    con_.SendMessage(Message::Init(Message::Id::Interested));
+    while (!storage_->AllPiecesDownloaded() && !terminating_) {
         if (!choked_)
-            while (requestedPieces_.size() < 15 && !storage_->AllPiecesGood()) {
+            while (requestedPieces_.size() < 15 && !storage_->AllPiecesDownloaded()) {
                 auto piece = storage_->AcquirePiece();
                 if (piece != nullptr) {
                     RequestBlocksForPiece(piece);
@@ -47,7 +48,7 @@ void DownloadManager::ReceiveLoop() {
     recvRunning_ = true;
 
     try {
-        while (!storage_->AllPiecesGood() && !terminating_) {
+        while (!storage_->AllPiecesDownloaded() && !terminating_) {
             Message msg = con_.RecieveMessage();
             if (msg.id == Message::Id::Unchoke) {
                 choked_ = false;
@@ -66,7 +67,7 @@ void DownloadManager::ReceiveLoop() {
                 if (piece->AllBlocksRetrieved()) {
                     requestedPieces_.erase(pieceIndex);
                     if (piece->Validate())
-                        storage_->PieceProcessed(piece);
+                        storage_->PieceDownloaded(piece);
                 }
             }
         }

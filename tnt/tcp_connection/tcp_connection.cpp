@@ -19,12 +19,14 @@ TcpConnection::~TcpConnection() {
     CloseConnection();
 }
 
-TcpConnection::TcpConnection(TcpConnection&& other) : ip_(other.ip_), port_(other.port_), connectTimeout_(other.connectTimeout_), readTimeout_(other.readTimeout_)  {
-
+TcpConnection::TcpConnection(TcpConnection&& other) : ip_(other.ip_), port_(other.port_), 
+        connectTimeout_(other.connectTimeout_), readTimeout_(other.readTimeout_)  {
+    
 }
 
-TcpConnection::TcpConnection(const TcpConnection& other) : ip_(other.ip_), port_(other.port_), connectTimeout_(other.connectTimeout_), readTimeout_(other.readTimeout_) {
-
+TcpConnection::TcpConnection(const TcpConnection& other) : ip_(other.ip_), port_(other.port_), 
+        connectTimeout_(other.connectTimeout_), readTimeout_(other.readTimeout_) {
+    
 }
 
 TcpConnection& TcpConnection::operator=(TcpConnection&& other) {

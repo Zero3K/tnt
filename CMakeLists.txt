@@ -27,8 +27,15 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
   GIT_TAG        v3.2.0
 )
-
 FetchContent_MakeAvailable(cxxopts)
+
+# indicators
+FetchContent_Declare(
+  indicators
+  GIT_REPOSITORY https://github.com/p-ranav/indicators.git
+  GIT_TAG        v2.3
+)
+FetchContent_MakeAvailable(indicators)
 
 # |-------------------------------------------------
 
@@ -69,6 +76,7 @@ target_link_libraries(
     cpr::cpr 
     ${OPENSSL_LIBRARIES}
     cxxopts
+    indicators
 
     bencode 
     torrent_file 

@@ -6,10 +6,15 @@
 #include <chrono>
 
 using namespace std::chrono_literals;
-constexpr std::chrono::duration maxPieceWaitTime = 500ms;
+constexpr std::chrono::duration maxPieceWaitTime = 4000ms;
 
-PieceStorage::PieceStorage(const TorrentFile& tf) : allPieces_(tf.pieceHashes.size()), acquireTimes_(tf.pieceHashes.size()) {
-    std::lock_guard lock(mtx_);
+PieceStorage::PieceStorage(const TorrentFile& tf, std::ofstream& outputFile) 
+        : tf_(tf), allPieces_(tf.pieceHashes.size()), acquireTimes_(tf.pieceHashes.size()), outputFile(outputFile) {
+    std::vector<char> zeros(1024, 0);
+    for (size_t i = 0; i < tf.length; i += 1024) {
+        outputFile.seekp(i);
+        outputFile.write(&zeros[0], std::min(tf.length, i + 1024) - i);
+    }
 
     for (size_t i = 0; i < tf.pieceHashes.size(); i++) {
         auto ptr = std::make_shared<Piece>(
@@ -39,19 +44,26 @@ std::shared_ptr<Piece> PieceStorage::AcquirePiece() {
     }
 }
 
-bool PieceStorage::AllPiecesGood() const {
+bool PieceStorage::AllPiecesDownloaded() const {
     return pendingPieces_.empty();
 }
 
-void PieceStorage::PieceProcessed(std::shared_ptr<Piece> piece) {
+void PieceStorage::PieceDownloaded(std::shared_ptr<Piece> piece) {
     std::lock_guard lock(mtx_);
     if (pendingPieces_.find({ acquireTimes_[piece->GetIndex()], piece }) != pendingPieces_.end()) {
         pendingPieces_.erase({ acquireTimes_[piece->GetIndex()], piece });
+        SavePieceToFile(piece);
+        // std::cout << "piece " << goodCount_ << "\n";
         goodCount_++;
-        // std::cout << "piece " << piece->GetIndex() << " processed by thread " << std::this_thread::get_id() << std::endl;
     }
 }
 
-int PieceStorage::GetProcessedCount() const {
+size_t PieceStorage::GetDownloadedCount() const {
     return goodCount_;
+}
+
+void PieceStorage::SavePieceToFile(std::shared_ptr<Piece> piece) {
+    outputFile.seekp(piece->GetIndex() * tf_.pieceLength);
+    auto data = piece->GetData();
+    outputFile.write(&data[0], data.size());
 }

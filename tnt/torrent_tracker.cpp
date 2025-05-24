@@ -35,7 +35,7 @@ void TorrentTracker::UpdatePeers(const TorrentFile& tf, std::string peerId, int 
                 + std::to_string((uint8_t)rawPeers[i + 1]) + "."
                 + std::to_string((uint8_t)rawPeers[i + 2]) + "."
                 + std::to_string((uint8_t)rawPeers[i + 3]),
-            .port = htons(*reinterpret_cast<uint16_t*>(&rawPeers[i + 4]))
+            .port = ntohs(*reinterpret_cast<uint16_t*>(&rawPeers[i + 4]))
         });
     }
 }

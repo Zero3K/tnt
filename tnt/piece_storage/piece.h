@@ -31,11 +31,12 @@ public:
     // Returns piece index.
     size_t GetIndex() const;
 
+    // Returns true if all blocks are retrieved).
     bool AllBlocksRetrieved() const;
-private:
 
+    // Returns retreived data.
     std::string GetData() const;
-
+private:
     std::string GetRetrievedDataHash() const;
 
     void Reset();
