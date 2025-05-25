@@ -8,6 +8,8 @@
 
 
 TorrentFile ParseTorrentFile(std::istream& stream) {
+    // TODO: add adequate announce-list support
+
     TorrentFile result;
     
     auto data = std::make_shared<Bencode::Entity>();
@@ -15,6 +17,16 @@ TorrentFile ParseTorrentFile(std::istream& stream) {
 
     auto dataMap = std::static_pointer_cast<Bencode::Dict>(data)->value;
     result.announce = std::static_pointer_cast<Bencode::String>(dataMap["announce"])->value;
+    if (dataMap.count("announce-list")) {
+        result.announce = std::static_pointer_cast<Bencode::String>(
+            std::static_pointer_cast<Bencode::List>(
+                std::static_pointer_cast<Bencode::List>(
+                    dataMap["announce-list"]
+                )->value[0]
+            )->value[0]
+        )->value;
+    }
+
     result.comment = std::static_pointer_cast<Bencode::String>(dataMap["comment"])->value;
 
     auto infoMap = std::static_pointer_cast<Bencode::Dict>(dataMap["info"])->value;

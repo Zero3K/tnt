@@ -14,10 +14,11 @@ void TorrentTracker::UpdatePeers(const TorrentFile& tf, std::string peerId, int 
             { "info_hash", tf.infoHash },
             { "peer_id", peerId },
             { "port", std::to_string(port) },
-            { "uploaded", std::to_string(port) },
-            { "downloaded", std::to_string(port) },
+            { "uploaded", std::to_string(0) },
+            { "downloaded", std::to_string(0) },
             { "left", std::to_string(tf.length) },
-            { "compact", std::to_string(1) }
+            { "compact", std::to_string(1) },
+            { "numwant", std::to_string(100) }
         }
     );
 

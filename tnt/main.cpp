@@ -25,7 +25,7 @@ void PrintProgressBar(int downloadedCnt, int totalCnt, float speed) {
 
     int progress = downloadedCnt * 50 / totalCnt;
 
-    std::cout << GREEN << "downloading... [";
+    std::cout << GREEN << BOLD << "Downloading... [" << RESET << GREEN;
     
     for (int i = 0; i < progress - 1; i++) 
         std::cout << "=";
@@ -40,14 +40,16 @@ void PrintProgressBar(int downloadedCnt, int totalCnt, float speed) {
     coutMtx_.unlock();
 }
 
-void PrintPeersCount(int connectedCnt) {
+void PrintPeersCount(int connectedCnt, int totalCnt) {
     static std::string icons = "/-\\|";
     static int i = 0;
 
     coutMtx_.lock();
 
     std::cout << MOVE_UP << MOVE_UP << "\r" << RESET << CLEAR_LINE;
-    std::cout << BOLD << LIGHT_GRAY << "[" << icons[i] << "] Peers connected: " << YELLOW << connectedCnt << "\n\n";
+    std::cout << BOLD << LIGHT_GRAY << "[" << icons[i] << "]" << RESET << LIGHT_GRAY
+        << " Peers connected: " << YELLOW << BOLD << connectedCnt
+        << RESET << DARK_GRAY << " out of " << totalCnt << " found\n\n";
 
     coutMtx_.unlock();
 
@@ -86,18 +88,15 @@ int main(int argc, char **argv) {
     std::ifstream stream(tfPath);
     stream >> file;
 
-    std::cout << "loading torrent file..." << std::endl;
     std::cout << " - name: " << file.name << std::endl;
     std::cout << " - announce: " << file.announce << std::endl;
     std::cout << " - description: " << file.comment << std::endl;
     // std::cout << " - piece size: " << file.pieceLength << std::endl;
     // std::cout << " - pieces: " << file.pieceHashes.size() << std::endl << std::endl;
 
-    std::cout << "getting peers..." << std::flush; 
     TorrentTracker tracker(file.announce);
-    tracker.UpdatePeers(file, "TEST0APP1DONT2WORRY3", 12345);
+    tracker.UpdatePeers(file, "TTST0APP1DONT2WORRY3", 12345);
     auto& peers = tracker.GetPeers();
-    std::cout << " found " << peers.size() << " peers" << std::endl;
 
     std::ofstream outputFile(outputFilePath);
     PieceStorage pieceStorage(file, outputFile);
@@ -129,10 +128,10 @@ int main(int argc, char **argv) {
 
     auto peersConnectedCntJob = [&]() {
         do {
-            PrintPeersCount(connCnt);
+            PrintPeersCount(connCnt, peers.size());
             std::this_thread::sleep_for(std::chrono::milliseconds(300));
         } while (!pieceStorage.AllPiecesDownloaded() || connCnt > 0);
-        PrintPeersCount(connCnt);
+        PrintPeersCount(connCnt, peers.size());
     };
     
     std::cout << "\n\n\n";
@@ -165,7 +164,7 @@ int main(int argc, char **argv) {
                 attempts++;
                 mng.Terminate();
 
-                if (attempts > 10)
+                if (attempts > 5)
                     break;
                 std::this_thread::sleep_for(1s * attempts);
                 continue;

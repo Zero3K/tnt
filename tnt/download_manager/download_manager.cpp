@@ -8,7 +8,8 @@
 
 using namespace std::chrono_literals;
 
-DownloadManager::DownloadManager(Peer peer, PieceStorage& storage, std::string hash) : storage_(&storage), con_(peer, "TEST1APP2DONT3WORRY6", hash) {
+DownloadManager::DownloadManager(Peer peer, PieceStorage& storage, std::string hash) : 
+        storage_(&storage), con_(peer, "TTST1APP2DONT3WORRY6", hash) {
 
 }
 
