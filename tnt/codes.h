@@ -6,7 +6,7 @@
 #define LIGHT_GRAY    "\033[38;5;252m"
 #define YELLOW        "\033[38;5;222m"
 
-#define MOVE_UP       "\033[1Fm"
+#define MOVE_UP       "\033[1F"
 #define CLEAR_LINE    "\033[2K"
 
 // #define GREEN   "\033[32m"      /* Green */

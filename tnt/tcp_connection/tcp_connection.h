@@ -9,12 +9,6 @@ class TcpConnection {
 public:
     TcpConnection(std::string ip, int port, std::chrono::milliseconds connectTimeout = 10000ms, std::chrono::milliseconds readTimeout = 10000ms);
 
-    TcpConnection(TcpConnection&& other);
-    TcpConnection(const TcpConnection& other);
-
-    TcpConnection& operator=(TcpConnection&& other);
-    TcpConnection& operator=(const TcpConnection& other);
-
     ~TcpConnection();
 
     // Establish connection.

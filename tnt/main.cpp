@@ -16,6 +16,44 @@
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
 
+std::mutex coutMtx_;
+
+void PrintProgressBar(int downloadedCnt, int totalCnt, float speed) {
+    coutMtx_.lock();
+
+    std::cout << MOVE_UP << "\r" << RESET << CLEAR_LINE;
+
+    int progress = downloadedCnt * 50 / totalCnt;
+
+    std::cout << GREEN << "downloading... [";
+    
+    for (int i = 0; i < progress - 1; i++) 
+        std::cout << "=";
+    if (progress > 0 && progress != 50)
+        std::cout << ">";
+
+    for (int i = 0; i < 50 - progress; i++) 
+        std::cout << " ";
+    std::cout << "] " << downloadedCnt << "/" << totalCnt << " ";
+    std::cout << speed << " MB/s\n";
+
+    coutMtx_.unlock();
+}
+
+void PrintPeersCount(int connectedCnt) {
+    static std::string icons = "/-\\|";
+    static int i = 0;
+
+    coutMtx_.lock();
+
+    std::cout << MOVE_UP << MOVE_UP << "\r" << RESET << CLEAR_LINE;
+    std::cout << BOLD << LIGHT_GRAY << "[" << icons[i] << "] Peers connected: " << YELLOW << connectedCnt << "\n\n";
+
+    coutMtx_.unlock();
+
+    i = (i + 1) % icons.size();
+}
+
 int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
 
@@ -72,40 +110,34 @@ int main(int argc, char **argv) {
 
     std::atomic<int> connCnt = 0;
     auto downloadProgressBarJob = [&]() {
-        std::cout << "\n\n\n";
         while (true) {
             int downloadedCnt = pieceStorage.GetDownloadedCount();
-            std::cout << MOVE_UP << MOVE_UP << RESET << "\r";
-
-            int progress = downloadedCnt * 50 / file.pieceHashes.size();
-            std::cout << CLEAR_LINE;
-            std::cout << BOLD << LIGHT_GRAY << "peers connected: " << YELLOW << connCnt << "\n";
-            std::cout << CLEAR_LINE;
-            std::cout << GREEN << "downloading... [";
-            
-            for (int i = 0; i < progress - 1; i++) 
-                std::cout << "=";
-            if (progress > 0 && progress != 50)
-                std::cout << ">";
-
-            for (int i = 0; i < 50 - progress; i++) 
-                std::cout << " ";
-            std::cout << "] " << downloadedCnt << "/" << file.pieceHashes.size() << " ";
 
             std::chrono::time_point tpCur = std::chrono::steady_clock::now();
 
-            // TODO: rework
+            // // TODO: rework
             float avgSpeed = 1000.0 * downloadedCnt * file.pieceLength /
                 std::chrono::duration_cast<std::chrono::milliseconds>(tpCur - tpStart).count() / 1024 / 1024;
-            std::cout << avgSpeed << " MB/s\n";
+            // std::cout << avgSpeed << " MB/s\n";
 
-            if (progress == 50)
+            PrintProgressBar(downloadedCnt, file.pieceHashes.size(), avgSpeed);
+            if (downloadedCnt == file.pieceHashes.size())
                 break;
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
     };
+
+    auto peersConnectedCntJob = [&]() {
+        do {
+            PrintPeersCount(connCnt);
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        } while (!pieceStorage.AllPiecesDownloaded() || connCnt > 0);
+        PrintPeersCount(connCnt);
+    };
     
+    std::cout << "\n\n\n";
     threads.emplace_back(downloadProgressBarJob);
+    threads.emplace_back(peersConnectedCntJob);
 
     auto dmReceiveTask = [](DownloadManager& mng) {
         try {
@@ -123,10 +155,9 @@ int main(int argc, char **argv) {
         }
     };
 
-    auto downloadTask = [&](Peer peer) {
+    auto downloadTask = [&](Peer peer, DownloadManager& mng) {
         int attempts = 0;
         while (!pieceStorage.AllPiecesDownloaded()) {
-            auto mng = DownloadManager(peer, pieceStorage, file.infoHash);
             try {
                 mng.EstablishConnection();
                 attempts = 0;
@@ -134,8 +165,9 @@ int main(int argc, char **argv) {
                 attempts++;
                 mng.Terminate();
 
-                if (attempts > 3)
+                if (attempts > 10)
                     break;
+                std::this_thread::sleep_for(1s * attempts);
                 continue;
             }
 
@@ -147,18 +179,30 @@ int main(int argc, char **argv) {
             t1.join();
             t2.join();
 
+            mng.Terminate();
+
             connCnt--;
         }
     };
 
     // very shitty, i'll fix that, i promise
+    std::vector<DownloadManager*> mngs;
     for (auto peer : peers) {
-        threads.emplace_back(downloadTask, peer);
+        mngs.push_back(new DownloadManager(peer, pieceStorage, file.infoHash));
+        threads.emplace_back(downloadTask, peer, std::ref(*mngs.back()));
         std::this_thread::sleep_for(100ms);
     }
 
+    while (!pieceStorage.AllPiecesDownloaded())
+        std::this_thread::sleep_for(1s);
+    for (auto* ptr : mngs)
+        ptr->Terminate();
+
     for (auto& t : threads)
         t.join();
+
+    for (auto* ptr : mngs)
+        delete ptr;
 
     return 0;
 }
