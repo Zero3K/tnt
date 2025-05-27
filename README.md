@@ -24,5 +24,6 @@ make
 - [ ] Don't download already saved parts of file
 - [x] Reconnect to peers after spontaneous disconnect
 - [ ] Keep track of peers pieces availabilty 
+- [ ] Rework piece downloading strategy
 - [ ] Dynamic piece wait time? (it's the time which storage piece waits before returning piece to pool)
 - [ ] Move piece acquiring logic to separate class? 
