@@ -1,6 +1,8 @@
 # tnt
 `tnt` is a simple console torrent client. **It is currently not finished and can only download torrents that consist of one file.**
 
+![demogif](https://github.com/alt-qi/tnt/blob/main/demo.gif)
+
 ### Building
 ```sh
 mkdir build
@@ -11,7 +13,7 @@ make
 
 ### Usage
 ```sh
-./tnt filename
+./tnt -o output_file torrent_file
 ```
 
 ### Specifics
