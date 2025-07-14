@@ -1,5 +1,5 @@
 # tnt
-`tnt` is a simple console torrent client. **It is currently not finished and can only download torrents that consist of one file.**
+`tnt` is a simple console torrent client.
 
 ![demogif](https://github.com/alt-qi/tnt/blob/main/demo.gif)
 
@@ -28,6 +28,7 @@ make
 - [x] Keep track of peers pieces availabilty 
 - [ ] Add more command line options (like timeouts)
 - [x] Rework piece downloading strategy
+- [ ] Add support for multifile torrents.
 - [ ] Move console graphics logic to separate classes
 - [ ] Dynamic piece wait time? (it's the time which storage piece waits before returning piece to pool)
 - [x] Move piece acquiring logic to separate class? 
