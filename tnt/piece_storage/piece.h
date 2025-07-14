@@ -26,7 +26,7 @@ public:
     
     // Validates that piece was fully recieved and the data was not corrupted.
     // Returns true if all data is ready and correct.
-    bool Validate();
+    bool HashMatches() const;
 
     // Returns piece index.
     size_t GetIndex() const;
@@ -36,13 +36,15 @@ public:
 
     // Returns retreived data.
     std::string GetData() const;
+
+    // Resets piece data;
+    void Reset();
 private:
     std::string GetRetrievedDataHash() const;
 
-    void Reset();
-
     const size_t index_, length_;
     const std::string hash_;
+    mutable std::mutex mtx_;
     std::vector<Block> blocks_;
     std::vector<bool> isRetrieved_;
     size_t retrievedCount_ = 0;

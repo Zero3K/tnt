@@ -20,18 +20,33 @@ public:
 
     void PieceDownloaded(std::shared_ptr<Piece> piece);
 
-    bool AllPiecesDownloaded() const;
+    // Returns the total amount of pieces that needs to be saved.
+    size_t GetTotalCount() const;
 
-    size_t GetDownloadedCount() const;
+    // Returns count of pieces that were already validated and saved to file.
+    size_t GetFinishedCount() const;
 
-    void SavePieceToFile(std::shared_ptr<Piece> piece);
+    // Returns count of pieces that were acquired but are not saved yet.
+    size_t GetPendingCount() const;
+
+    // Returns count of pieces that were acquired but are not saved yet.
+    size_t GetQueuedCount() const;
 private:
-    std::set<std::pair<std::chrono::time_point<std::chrono::steady_clock>, std::shared_ptr<Piece>>> pendingPieces_;
-    std::vector<std::chrono::time_point<std::chrono::steady_clock>> acquireTimes_;
-    std::vector<std::shared_ptr<Piece>> allPieces_;
-    std::atomic<size_t> goodCount_ = 0;
-    TorrentFile tf_;
-    std::ofstream& outputFile;
+    // Saves piece to file.
+    void SavePieceToFile(std::shared_ptr<Piece> piece);
 
-    mutable std::mutex mtx_;
+    // Reserves space for a file on disk (by filling it with zeros).
+    void ReserveSpace(std::ofstream& file, size_t bytesCount);
+
+    std::queue<std::shared_ptr<Piece>> piecesQueue_;
+    std::vector<bool> savedState_;
+
+    size_t totalCount_ = 0;
+    std::atomic<size_t> finishedCount_ = 0;
+    std::atomic<size_t> pendingCount_ = 0;
+
+    TorrentFile tf_;
+    std::ofstream& outputFile_;
+
+    mutable std::mutex queueMtx_, fileMtx_, stateMtx_;
 };

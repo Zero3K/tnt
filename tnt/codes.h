@@ -2,7 +2,7 @@
 #define RESET         "\033[0m"
 #define BOLD          "\033[1m"
 #define GREEN         "\033[38;5;114m"
-#define DARK_GRAY     "\033[38;5;238m"
+#define DARK_GRAY     "\033[38;5;243m"
 #define LIGHT_GRAY    "\033[38;5;252m"
 #define YELLOW        "\033[38;5;222m"
 

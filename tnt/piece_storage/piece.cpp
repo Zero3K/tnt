@@ -4,11 +4,9 @@
 #include <openssl/sha.h>
 #include <chrono>
 
-
 using namespace std::chrono_literals;
 
 static constexpr size_t BLOCK_SIZE = 1 << 14;
-static constexpr std::chrono::duration BLOCK_ASSIGN_TIME = 5000ms;
 
 Piece::Piece(size_t index, size_t length, std::string hash) : 
         index_(index), length_(length), hash_(hash), blocks_((length + BLOCK_SIZE - 1) / BLOCK_SIZE), isRetrieved_(blocks_.size()) {
@@ -28,6 +26,7 @@ size_t Piece::GetIndex() const {
 }
 
 void Piece::SaveBlock(size_t blockOffset, std::string data) {
+    std::lock_guard lock(mtx_);
     blocks_[blockOffset / BLOCK_SIZE].data = data;
     if (!isRetrieved_[blockOffset / BLOCK_SIZE]) {
         isRetrieved_[blockOffset / BLOCK_SIZE] = true;
@@ -36,10 +35,13 @@ void Piece::SaveBlock(size_t blockOffset, std::string data) {
 }
 
 bool Piece::AllBlocksRetrieved() const {
+    std::lock_guard lock(mtx_);
     return retrievedCount_ == blocks_.size();
 }
 
 std::string Piece::GetData() const {
+    std::lock_guard lock(mtx_);
+
     std::string result;
     for (const Block& block : blocks_) {
         auto c = block.data;
@@ -61,20 +63,14 @@ std::string Piece::GetRetrievedDataHash() const {
 }
 
 void Piece::Reset() {
+    std::lock_guard lock(mtx_);
+
     for (Block& block : blocks_)
         block.data = "";
     retrievedCount_ = 0;
     isRetrieved_.assign(isRetrieved_.size(), false);
 }
 
-bool Piece::Validate() {
-    if (retrievedCount_ < blocks_.size())
-        return false;
-
-    if (GetRetrievedDataHash() != hash_) {
-        Reset();
-        return false;
-    }
-
-    return true;
+bool Piece::HashMatches() const {
+    return GetRetrievedDataHash() == hash_;
 }

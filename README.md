@@ -25,7 +25,9 @@ make
 - [x] Save downloaded pieces to disk
 - [ ] Don't download already saved parts of file
 - [x] Reconnect to peers after spontaneous disconnect
-- [ ] Keep track of peers pieces availabilty 
-- [ ] Rework piece downloading strategy
+- [x] Keep track of peers pieces availabilty 
+- [ ] Add more command line options (like timeouts)
+- [x] Rework piece downloading strategy
+- [ ] Move console graphics logic to separate classes
 - [ ] Dynamic piece wait time? (it's the time which storage piece waits before returning piece to pool)
-- [ ] Move piece acquiring logic to separate class? 
+- [x] Move piece acquiring logic to separate class? 

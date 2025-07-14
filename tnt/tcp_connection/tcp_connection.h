@@ -2,6 +2,7 @@
 
 #include <string>
 #include <chrono>
+#include <atomic>
 
 using namespace std::chrono_literals;
 
@@ -15,16 +16,20 @@ public:
     void EstablishConnection();
 
     // Send data to remote host.
-    void SendData(const std::string& data) const;
+    void SendData(const std::string& data);
 
     // Recieve data from remote host.
-    std::string ReceiveData(size_t bufferSize = 0) const;
+    std::string ReceiveData(size_t bufferSize = 0);
 
     // Close connection.
-    void CloseConnection();
+    void Terminate();
+    
+    // Returns true if remote host is connected and false otherwise.
+    bool IsRunning() const;
 private:
     std::string ip_;
     int port_;
     std::chrono::milliseconds connectTimeout_, readTimeout_;
+
     int sock_ = -1;
 };

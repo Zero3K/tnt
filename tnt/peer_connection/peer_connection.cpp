@@ -1,5 +1,4 @@
 #include "peer_connection.h"
-#include "../tcp_connection/exception.h"
 #include "message.h"
 #include "../piece_storage/piece_storage.h"
 #include "../torrent_file/types.h"
@@ -9,19 +8,18 @@
 #include <optional>
 #include <chrono>
 
-
 using namespace std::chrono_literals;
+const std::string proto = "BitTorrent protocol";
+
 
 PeerConnection::PeerConnection(const Peer& peer, std::string selfId, std::string hash) 
-    : peer_(peer), selfId_(selfId), hash_(hash), socket_(peer.ip, peer.port, 20000ms, 10000ms) {}
+    : peer_(peer), selfId_(selfId), hash_(hash), socket_(peer.ip, peer.port, 3000ms, 10000ms) {}
 
 PeerConnection::~PeerConnection() {
-    socket_.CloseConnection();
+    socket_.Terminate();
 }
 
 void PeerConnection::PerformHandshake() {    
-    std::string proto = "BitTorrent protocol";
-
     std::string data;
     data.reserve(49 + proto.size());
 
@@ -37,13 +35,17 @@ void PeerConnection::PerformHandshake() {
 
     int peerProtoSize = static_cast<int>(socket_.ReceiveData(1)[0]);
     if (peerProtoSize == 0) {
-        throw std::runtime_error("bad peer proto size");
+        socket_.Terminate();
+        throw std::runtime_error("Peer connection error: peer protocol size equals zero");
     }
     std::string peerProto = socket_.ReceiveData(peerProtoSize);
     std::string suf = socket_.ReceiveData(48);
 
     peerId_ = suf.substr(28);
-    
+}
+
+bool PeerConnection::IsRunning() const {
+    return socket_.IsRunning();
 }
 
 void PeerConnection::EstablishConnection() {
@@ -51,15 +53,15 @@ void PeerConnection::EstablishConnection() {
     PerformHandshake();
 }
 
-void PeerConnection::SendMessage(const Message& msg) const {
+void PeerConnection::SendMessage(const Message& msg) {
     socket_.SendData(msg.ToString());
 }
 
-Message PeerConnection::RecieveMessage() const {
+Message PeerConnection::RecieveMessage() {
     Message msg = Message::Parse(socket_.ReceiveData());
     return msg;
 }
 
 void PeerConnection::CloseConnection() {
-    socket_.CloseConnection();
+    socket_.Terminate();
 }

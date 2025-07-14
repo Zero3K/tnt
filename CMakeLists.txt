@@ -4,6 +4,9 @@ project(tnt)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# add_compile_options(-fsanitize=thread)
+# add_link_options(-fsanitize=thread)
+
 # |-------------------------------------------------
 
 include(FetchContent)
@@ -57,8 +60,11 @@ add_library(piece_storage
     tnt/piece_storage/piece.cpp
     tnt/piece_storage/piece_storage.cpp
 )
-add_library(download_manager
-    tnt/download_manager/download_manager.cpp
+add_library(peer_downloader
+    tnt/peer_downloader/peer_downloader.cpp
+)
+add_library(conductor
+    tnt/conductor/conductor.cpp
 )
 
 add_executable(${PROJECT_NAME} tnt/main.cpp)
@@ -75,5 +81,6 @@ target_link_libraries(
     tcp_connection
     peer_connection
     piece_storage
-    download_manager
+    peer_downloader
+    conductor
 )

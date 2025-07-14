@@ -11,24 +11,40 @@
 class PeerConnection {
 public:
     PeerConnection(const Peer& peer, std::string selfId, std::string hash);
+
     ~PeerConnection();
 
-    // Establish connection to peer.
+    /*
+     * Establish connection to peer.
+     */
     void EstablishConnection();
 
-    // Send message to a peer.
-    void SendMessage(const Message& msg) const;
+    /*
+     * Send message to a peer.
+     */
+    void SendMessage(const Message& msg);
 
-    // Recieve message from a peer.
-    Message RecieveMessage() const;
+    /*
+     * Recieve message from a peer.
+     */
+    Message RecieveMessage();
 
-    // Close connection to peer.
+    /*
+     * Close connection to peer.
+     */
     void CloseConnection();
+
+    /*
+     * Returns true if connection is running and false otherwise.
+     */
+    bool IsRunning() const;
 private:
-    const Peer& peer_;
+    /*
+     * Perform handshake. Should be called first after establishing connection.
+     */
+    void PerformHandshake();
+
+    Peer peer_;
     std::string selfId_, peerId_, hash_;
     TcpConnection socket_;
-
-    // Perfrom handshake. Should be called first after establishing connection.
-    void PerformHandshake();
 };

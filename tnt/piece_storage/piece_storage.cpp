@@ -4,66 +4,97 @@
 #include <thread>
 #include <mutex>
 #include <chrono>
+#include <random>
 
 using namespace std::chrono_literals;
-constexpr std::chrono::duration maxPieceWaitTime = 4000ms;
 
 PieceStorage::PieceStorage(const TorrentFile& tf, std::ofstream& outputFile) 
-        : tf_(tf), allPieces_(tf.pieceHashes.size()), acquireTimes_(tf.pieceHashes.size()), outputFile(outputFile) {
-    std::vector<char> zeros(1024, 0);
-    for (size_t i = 0; i < tf.length; i += 1024) {
-        outputFile.seekp(i);
-        outputFile.write(&zeros[0], std::min(tf.length, i + 1024) - i);
-    }
+        : tf_(tf), outputFile_(outputFile), totalCount_(tf.pieceHashes.size()), 
+        savedState_(tf.pieceHashes.size()) {
+    std::vector<std::shared_ptr<Piece>> piecesOrd;
+    piecesOrd.reserve(tf.pieceHashes.size());
 
     for (size_t i = 0; i < tf.pieceHashes.size(); i++) {
-        auto ptr = std::make_shared<Piece>(
+        piecesOrd.push_back(std::make_shared<Piece>(
             i,
             std::min(tf.length, (i + 1) * tf.pieceLength) - i * tf.pieceLength,
             tf.pieceHashes[i]
-        );
-
-        acquireTimes_[i] = std::chrono::steady_clock::now() - maxPieceWaitTime - 1s;
-        pendingPieces_.insert({ acquireTimes_[i], ptr });
-        allPieces_[i] = ptr;
+        ));
     }
+
+    std::default_random_engine rng;
+    std::shuffle(piecesOrd.begin(), piecesOrd.end(), rng);
+
+    for (auto piece : piecesOrd)
+        piecesQueue_.push(piece);
+
+    ReserveSpace(outputFile_, tf.length);
+}
+
+void PieceStorage::ReserveSpace(std::ofstream& file, size_t bytesCount) {
+    std::vector<char> zeros(1024, 0);
+    for (size_t i = 0; i < bytesCount; i += 1024) {
+        file.seekp(i);
+        file.write(&zeros[0], std::min(bytesCount, i + 1024) - i);
+    }
+    file.seekp(0);
 }
 
 std::shared_ptr<Piece> PieceStorage::AcquirePiece() {
-    std::lock_guard lock(mtx_);
-
-    auto it = pendingPieces_.begin();
-    if (it != pendingPieces_.end() && (std::chrono::steady_clock::now() - it->first) > maxPieceWaitTime) {
-        auto [time, piece] = *it;
-        acquireTimes_[piece->GetIndex()] = std::chrono::steady_clock::now();
-        pendingPieces_.erase(it);
-        pendingPieces_.insert({ acquireTimes_[piece->GetIndex()], piece });
+    if (!piecesQueue_.empty()) {
+        queueMtx_.lock();
+        auto piece = piecesQueue_.front();
+        piecesQueue_.pop();
+        pendingCount_++;
+        queueMtx_.unlock();
+        
         return piece;
     } else {
         return nullptr;
     }
 }
 
-bool PieceStorage::AllPiecesDownloaded() const {
-    return pendingPieces_.empty();
+void PieceStorage::SavePieceToFile(std::shared_ptr<Piece> piece) {
+    std::lock_guard lock(fileMtx_);
+    outputFile_.seekp(piece->GetIndex() * tf_.pieceLength);
+    auto data = piece->GetData();
+    outputFile_.write(&data[0], data.size());
+}
+
+size_t PieceStorage::GetTotalCount() const {
+    return totalCount_;
+}
+
+size_t PieceStorage::GetFinishedCount() const {
+    return finishedCount_;
+}
+
+size_t PieceStorage::GetPendingCount() const {
+    return pendingCount_;
+}
+
+size_t PieceStorage::GetQueuedCount() const {
+    std::lock_guard lock(queueMtx_);
+    return piecesQueue_.size();
 }
 
 void PieceStorage::PieceDownloaded(std::shared_ptr<Piece> piece) {
-    std::lock_guard lock(mtx_);
-    if (pendingPieces_.find({ acquireTimes_[piece->GetIndex()], piece }) != pendingPieces_.end()) {
-        pendingPieces_.erase({ acquireTimes_[piece->GetIndex()], piece });
+    std::unique_lock lock(stateMtx_);
+    if (savedState_[piece->GetIndex()]) 
+        return;
+
+    if (!piece->HashMatches()) {
+        piece->Reset();
+        
+        queueMtx_.lock();
+        piecesQueue_.push(piece);
+        queueMtx_.unlock();
+    } else {
         SavePieceToFile(piece);
-        // std::cout << "piece " << goodCount_ << "\n";
-        goodCount_++;
+        savedState_[piece->GetIndex()] = true;
+        lock.unlock();
+        
+        finishedCount_++;
+        pendingCount_--;
     }
-}
-
-size_t PieceStorage::GetDownloadedCount() const {
-    return goodCount_;
-}
-
-void PieceStorage::SavePieceToFile(std::shared_ptr<Piece> piece) {
-    outputFile.seekp(piece->GetIndex() * tf_.pieceLength);
-    auto data = piece->GetData();
-    outputFile.write(&data[0], data.size());
 }
