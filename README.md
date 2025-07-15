@@ -29,6 +29,6 @@ make
 - [ ] Add more command line options (like timeouts)
 - [x] Rework piece downloading strategy
 - [ ] Add support for multifile torrents.
-- [ ] Move console graphics logic to separate classes
+- [x] Move console graphics logic to separate classes
 - [ ] Dynamic piece wait time? (it's the time which storage piece waits before returning piece to pool)
 - [x] Move piece acquiring logic to separate class? 

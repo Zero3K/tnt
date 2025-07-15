@@ -49,7 +49,6 @@ target_link_libraries(
 )
 add_library(tcp_connection
     tnt/tcp_connection/tcp_connection.cpp
-    tnt/tcp_connection/exception.h
 )
 add_library(peer_connection
     tnt/peer_connection/peer_connection.cpp
@@ -65,6 +64,9 @@ add_library(peer_downloader
 )
 add_library(conductor
     tnt/conductor/conductor.cpp
+)
+add_library(visuals
+    tnt/visuals/visuals.cpp
 )
 
 add_executable(${PROJECT_NAME} tnt/main.cpp)
@@ -83,4 +85,5 @@ target_link_libraries(
     piece_storage
     peer_downloader
     conductor
+    visuals
 )

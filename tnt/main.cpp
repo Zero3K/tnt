@@ -3,7 +3,7 @@
 #include "torrent_file/types.h"
 #include "torrent_tracker.h"
 #include "peer_connection/peer_connection.h"
-#include "codes.h"
+#include "visuals/visuals.h"
 #include "conductor/conductor.h"
 #include <cxxopts.hpp>
 #include <exception>
@@ -17,58 +17,8 @@
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
 
-std::mutex coutMtx_;
-
-void PrintProgressBar(int downloadedCnt, int totalCnt, float speed) {
-    coutMtx_.lock();
-
-    std::cout << MOVE_UP << "\r" << RESET << CLEAR_LINE;
-
-    int progress = downloadedCnt * 50 / totalCnt;
-
-    std::cout << GREEN << BOLD << "Downloading... [" << RESET << GREEN;
-    
-    for (int i = 0; i < progress; i++) 
-        std::cout << "=";
-    if (progress != 50)
-        std::cout << ">";
-
-    for (int i = 0; i < 50 - progress - 1; i++) 
-        std::cout << " ";
-    std::cout << "] " << downloadedCnt << "/" << totalCnt << " ";
-    std::cout << speed << " MB/s\n";
-
-    coutMtx_.unlock();
-}
-
-void PrintPeersCount(int connectedCnt, int totalCnt) {
-    static std::string icons = "/-\\|";
-    static int i = 0;
-
-    coutMtx_.lock();
-
-    std::cout << MOVE_UP << MOVE_UP << "\r" << RESET << CLEAR_LINE;
-    std::cout << BOLD << LIGHT_GRAY << "[";
-
-    if (connectedCnt != 0)
-        std::cout << icons[i];
-    else
-        std::cout << "x";
-
-    std::cout << "]" << RESET << LIGHT_GRAY
-        << " Peers connected: " << YELLOW << BOLD << connectedCnt
-        << RESET << DARK_GRAY << " out of " << totalCnt << " found\n\n";
-
-    coutMtx_.unlock();
-
-    i = (i + 1) % icons.size();
-}
-
 int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
-
-    std::cout.precision(1);
-    std::cout.setf(std::ios::fixed);
 
     // =========================================================
 
@@ -118,43 +68,32 @@ int main(int argc, char **argv) {
     threads.emplace_back([ptr = &cond] { ptr->Download(); });
 
     // =========================================================
+ 
+    InfoBoard board(4, 100ms);
 
+    auto tp = std::chrono::steady_clock::now();
+    auto progressRow = std::make_shared<DownloadProgressBarRow>([&]{
+        return std::tuple<int, int>{
+            pieceStorage.GetFinishedCount(),
+            file.pieceHashes.size()
+        };
+    });
+    board.SetRow(3, progressRow, 200ms);
 
-    std::chrono::time_point tpStart = std::chrono::steady_clock::now();
+    auto peersRow = std::make_shared<ConnectedPeersStatusRow>([&]{
+        return std::tuple<int, int>{
+            cond.GetConnectedCount(),
+            peers.size()
+        };
+    });
+    board.SetRow(2, peersRow, 300ms);
 
-    std::atomic<int> connCnt = 0;
-    auto downloadProgressBarJob = [&]() {
-        while (true) {
-            int downloadedCnt = pieceStorage.GetFinishedCount();
-
-            std::chrono::time_point tpCur = std::chrono::steady_clock::now();
-
-            // // TODO: rework
-            float avgSpeed = 1000.0 * downloadedCnt * file.pieceLength /
-                std::chrono::duration_cast<std::chrono::milliseconds>(tpCur - tpStart).count() / 1024 / 1024;
-            // std::cout << avgSpeed << " MB/s\n";
-
-            PrintProgressBar(downloadedCnt, file.pieceHashes.size(), avgSpeed);
-            if (downloadedCnt == file.pieceHashes.size())
-                break;
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        }
-    };
-
-    auto peersConnectedCntJob = [&]() {
-        do {
-            PrintPeersCount(cond.GetConnectedCount(), peers.size());
-            std::this_thread::sleep_for(std::chrono::milliseconds(300));
-        } while (pieceStorage.GetFinishedCount() < pieceStorage.GetTotalCount() || connCnt > 0);
-        PrintPeersCount(cond.GetConnectedCount(), peers.size());
-    };
-    
-    std::cout << "\n\n\n";
-    threads.emplace_back(downloadProgressBarJob);
-    threads.emplace_back(peersConnectedCntJob);
+    board.Start();
 
     while (pieceStorage.GetFinishedCount() < pieceStorage.GetTotalCount())
         std::this_thread::sleep_for(1000ms);
+    
+    board.Stop();
 
     for (auto& t : threads)
         t.join();
