@@ -34,13 +34,12 @@ public:
     void SendLoop();
 
     /*
-     * Adds specified piece to downloader's pending pieces queue.
+     * Add specified piece to downloader's pending pieces queue.
      */
     void QueuePiece(std::shared_ptr<Piece> piece);
 
     /*
-     * Removes specified piece from downloader's pending pieces queue.
-     * This will do nothing if piece has already been requested.
+     * Cancel request for the specified piece.
      */
     void CancelPiece(std::shared_ptr<Piece> piece);
 
@@ -85,4 +84,5 @@ private:
     std::vector<bool> pieceAvailability_;
 
     std::atomic<bool> choked_ = true;
+    std::atomic<int> requestedLimit_ = 5;
 };

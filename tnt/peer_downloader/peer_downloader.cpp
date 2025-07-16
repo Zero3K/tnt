@@ -5,9 +5,11 @@
 #include <utility>
 #include <thread>
 #include <arpa/inet.h>
+#include <random>
 
 using namespace std::chrono_literals;
-const int oneTimeRequestedLimit = 5;
+
+std::default_random_engine rng;
 
 PeerDownloader::PeerDownloader(Peer peer, TorrentFile file,
         std::function<void(std::shared_ptr<Piece>)> callback) : 
@@ -16,17 +18,35 @@ PeerDownloader::PeerDownloader(Peer peer, TorrentFile file,
     downloadCallback_(callback) {}
 
 void PeerDownloader::QueuePiece(std::shared_ptr<Piece> piece) {
-    queueMtx_.lock();
+    std::unique_lock lock(queueMtx_);
     queuedPieces_.push_back(piece);
-    queueMtx_.unlock();
 }
 
 void PeerDownloader::CancelPiece(std::shared_ptr<Piece> piece) {
-    queueMtx_.lock();
-    std::erase_if(queuedPieces_, [&](const std::shared_ptr<Piece>& ptr) { 
-        return ptr->GetIndex() == piece->GetIndex();
-    });
-    queueMtx_.unlock();
+    std::unique_lock lock1(queueMtx_);
+    auto itQueue = std::find_if(queuedPieces_.begin(), queuedPieces_.end(), 
+        [&](const std::shared_ptr<Piece>& ptr) { 
+            return ptr->GetIndex() == piece->GetIndex();
+        }
+    );
+
+    if (itQueue != queuedPieces_.end()) {
+        queuedPieces_.erase(itQueue);
+        return;
+    }
+
+    lock1.unlock();
+
+    std::unique_lock lock2(reqMtx_);
+    auto itReq = std::find_if(requestedPieces_.begin(), requestedPieces_.end(), 
+        [&](const std::shared_ptr<Piece>& ptr) { 
+            return ptr->GetIndex() == piece->GetIndex();
+        }
+    );
+
+    if (itReq != requestedPieces_.end()) {
+        requestedPieces_.erase(itReq);
+    }
 }
 
 bool PeerDownloader::IsPieceAvailable(size_t pieceIdx) {
@@ -59,7 +79,7 @@ void PeerDownloader::SendLoop() {
     while (IsRunning()) {
         if (!choked_) {
             std::unique_lock lock(reqMtx_);
-            while (requestedPieces_.size() < oneTimeRequestedLimit) {
+            while (requestedPieces_.size() < requestedLimit_) {
                 auto piece = AcquirePiece();
 
                 if (piece != nullptr) {
@@ -96,7 +116,7 @@ std::shared_ptr<Piece> PeerDownloader::AcquirePiece() {
     if (queuedPieces_.empty())
         return nullptr;
 
-    size_t idx = rand() % queuedPieces_.size();  // FIX
+    size_t idx = rng() % queuedPieces_.size();  // FIX
     std::swap(queuedPieces_[idx], queuedPieces_.back());
     auto piece = queuedPieces_.back();
     queuedPieces_.pop_back();
@@ -108,21 +128,24 @@ void PeerDownloader::Terminate() {
     connection_.CloseConnection();
 
     // canceling unfinished pieces
+    std::vector<std::shared_ptr<Piece>> toRemove;
+
     queueMtx_.lock();
-    while (!queuedPieces_.empty()) {
-        downloadCallback_(queuedPieces_.back());
-        queuedPieces_.pop_back();
-    }
+    for (auto ptr : queuedPieces_)
+        toRemove.push_back(ptr);
+    queuedPieces_.clear();
     queueMtx_.unlock();
+
     reqMtx_.lock();
-    while (!requestedPieces_.empty()) {
-        downloadCallback_(requestedPieces_.back());
-        requestedPieces_.pop_back();
-    }
+    for (auto ptr : requestedPieces_)
+        toRemove.push_back(ptr);
+    requestedPieces_.clear();
     reqMtx_.unlock();
 
-    // availabilityMtx_.lock();
-    // pieceAvailability_.assign(file_)
+    while (!toRemove.empty()) {
+        downloadCallback_(toRemove.back());
+        toRemove.pop_back();
+    }
 }
 
 // ---------------------------------------------------
@@ -132,11 +155,12 @@ void PeerDownloader::ProcessPieceMessage(Message& msg) {
     uint32_t blockOffset = ntohl(*reinterpret_cast<const uint32_t*>(&msg.payload[4]));
     std::string data = msg.payload.substr(8);
 
-    std::lock_guard lock(reqMtx_);
+    std::unique_lock lock(reqMtx_);
 
     auto it = find_if(requestedPieces_.begin(), requestedPieces_.end(), [&](const std::shared_ptr<Piece>& ptr) {
         return (ptr->GetIndex() == pieceIndex);
     });
+
     if (it == requestedPieces_.end())
         return;
 
@@ -145,6 +169,7 @@ void PeerDownloader::ProcessPieceMessage(Message& msg) {
 
     if (piece->AllBlocksRetrieved()) {
         requestedPieces_.erase(it);
+        lock.unlock();
         downloadCallback_(piece);
     }
 }

@@ -101,7 +101,8 @@ void InfoBoard::Start() {
 
 void InfoBoard::Stop() {
     running_ = false;
-    thr_.join();
+    if (thr_.joinable())
+        thr_.join();
 }
 
 void InfoBoard::SetRow(int rowIdx, std::shared_ptr<InfoRow> row, 

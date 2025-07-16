@@ -3,6 +3,7 @@
 #include <string>
 #include <chrono>
 #include <atomic>
+#include <mutex>
 
 using namespace std::chrono_literals;
 
@@ -31,5 +32,6 @@ private:
     int port_;
     std::chrono::milliseconds connectTimeout_, readTimeout_;
 
+    mutable std::mutex sendMtx_, rcvMtx_;
     int sock_ = -1;
 };

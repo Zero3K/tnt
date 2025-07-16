@@ -96,6 +96,8 @@ void TcpConnection::SendData(const std::string& data) {
         throw std::runtime_error("Can't send until connection is established.");
     }
 
+    std::unique_lock lock(sendMtx_);
+
     if (send(sock_, &data[0], data.size(), 0) == -1) {
         Terminate();
         throw std::runtime_error(
@@ -109,8 +111,9 @@ std::string TcpConnection::ReceiveData(size_t bufferSize) {
         throw std::runtime_error("Can't receive until connection is established.");
     }
 
-    std::string result;
+    std::unique_lock lock(rcvMtx_);
 
+    std::string result;
     if (bufferSize == 0) {
         result.resize(4);
 
