@@ -101,6 +101,10 @@ void Conductor::Download() {
         dwn->Terminate();
 }
 
+bool Conductor::isEndgame() {
+    return endgame_;
+}
+
 void Conductor::QueuePiece(std::shared_ptr<Piece> piece) {
     while (true) {
         for (size_t i = 0; i < downloaders_.size(); i++) {

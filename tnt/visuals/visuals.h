@@ -23,13 +23,13 @@ public:
 class DownloadProgressBarRow : public InfoRow {
 public:
     DownloadProgressBarRow(
-        std::function<std::tuple<int, int>()> dataSrc
+        std::function<std::tuple<int, int, bool>()> dataSrc
     );
     
     std::string GetValue() override;
 
 private:
-    std::function<std::tuple<int, int>()> dataSrc_;
+    std::function<std::tuple<int, int, bool>()> dataSrc_;
 };
 
 

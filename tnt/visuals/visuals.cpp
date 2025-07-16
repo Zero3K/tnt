@@ -15,11 +15,11 @@ std::string EmptyRow::GetValue() {
 
 
 DownloadProgressBarRow::DownloadProgressBarRow(
-    std::function<std::tuple<int, int>()> dataSrc
+    std::function<std::tuple<int, int, bool>()> dataSrc
 ) : dataSrc_(dataSrc) {}
 
 std::string DownloadProgressBarRow::GetValue() {
-    auto [downloadedCnt, totalCnt] = dataSrc_();
+    auto [downloadedCnt, totalCnt, isEndgame] = dataSrc_();
 
     // yeah it looks pretty bad but i'll fix it
     
@@ -41,6 +41,9 @@ std::string DownloadProgressBarRow::GetValue() {
 
     float percentage = downloadedCnt * 100.0 / totalCnt;
     sstr << std::fixed << std::setprecision(2) << BOLD << percentage << "%";
+    if (isEndgame) {
+        sstr << YELLOW << " ↯";
+    }
 
     return sstr.str();
 }
@@ -53,29 +56,10 @@ ConnectedPeersStatusRow::ConnectedPeersStatusRow(
 std::string ConnectedPeersStatusRow::GetValue() {
     auto [connectedCnt, totalCnt] = dataSrc_();
 
-    static const std::vector<std::string> icons = {
-        "[ / ]",
-        "[ - ]",
-        "[ \\ ]",
-        "[ | ]"
-    };
-    static const std::string deadIcon = "[~_~]";
-
-    static int i = 0;
-
     std::stringstream sstr;
-    sstr << CLEAR_LINE << BOLD << LIGHT_GRAY;
-
-    if (connectedCnt != 0)
-        sstr << icons[i];
-    else
-        sstr << deadIcon;
-
-    sstr << RESET << LIGHT_GRAY
-        << " Peers connected: " << YELLOW << BOLD << connectedCnt
+    sstr << CLEAR_LINE << RESET << LIGHT_GRAY
+        << "Peers connected: " << YELLOW << BOLD << connectedCnt
         << RESET << DARK_GRAY << " out of " << totalCnt << " found";
-
-    i = (i + 1) % icons.size();
 
     return sstr.str();
 }

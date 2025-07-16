@@ -46,11 +46,8 @@ int main(int argc, char **argv) {
     std::ifstream stream(tfPath);
     stream >> file;
 
-    std::cout << " - name: " << file.name << std::endl;
-    std::cout << " - announce: " << file.announce << std::endl;
-    std::cout << " - description: " << file.comment << std::endl;
-    // std::cout << " - piece size: " << file.pieceLength << std::endl;
-    // std::cout << " - pieces: " << file.pieceHashes.size() << std::endl << std::endl;
+    std::cout << " - Name: " <<  file.name << std::endl;
+    std::cout << " - Comment: " << file.comment << std::endl;
 
     TorrentTracker tracker(file.announce);
     tracker.UpdatePeers(file, "TTST0APP1DONT2WORRY3", 12345);
@@ -69,16 +66,17 @@ int main(int argc, char **argv) {
 
     // =========================================================
  
-    InfoBoard board(4, 100ms);
+    InfoBoard board(3, 100ms);
 
     auto tp = std::chrono::steady_clock::now();
     auto progressRow = std::make_shared<DownloadProgressBarRow>([&]{
-        return std::tuple<int, int>{
+        return std::tuple<int, int, bool>{
             pieceStorage.GetFinishedCount(),
-            file.pieceHashes.size()
+            file.pieceHashes.size(),
+            cond.isEndgame()
         };
     });
-    board.SetRow(3, progressRow, 200ms);
+    board.SetRow(2, progressRow, 200ms);
 
     auto peersRow = std::make_shared<ConnectedPeersStatusRow>([&]{
         return std::tuple<int, int>{
@@ -86,7 +84,7 @@ int main(int argc, char **argv) {
             peers.size()
         };
     });
-    board.SetRow(2, peersRow, 100ms);
+    board.SetRow(1, peersRow, 300ms);
 
     board.Start();
 

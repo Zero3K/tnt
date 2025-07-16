@@ -24,6 +24,7 @@ make
 - [x] Accept parameters from input args
 - [x] Save downloaded pieces to disk
 - [ ] Don't download already saved parts of file
+- [x] Implement endgame mode
 - [x] Reconnect to peers after spontaneous disconnect
 - [x] Keep track of peers pieces availabilty 
 - [ ] Add more command line options (like timeouts)

@@ -18,6 +18,10 @@ public:
      */
     size_t GetConnectedCount() const;
 
+    /*
+     * Check if conductor is in endgame mode.
+     */
+    bool isEndgame();
 private:
     /*
      * Connect specified peer to the conductor.
