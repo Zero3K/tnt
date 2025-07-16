@@ -64,8 +64,12 @@ public:
      * Returns true if downloader is running and false otherwise.
      */
     bool IsRunning() const;
+    
+    void FlushPieces(bool sendCancel = false);
 private:
     void RequestBlocksForPiece(std::shared_ptr<Piece> piece);
+    void CancelBlocksForPiece(std::shared_ptr<Piece> piece);
+
     std::shared_ptr<Piece> AcquirePiece();
 
     void ProcessHaveMessage(Message& msg);
@@ -84,5 +88,5 @@ private:
     std::vector<bool> pieceAvailability_;
 
     std::atomic<bool> choked_ = true;
-    std::atomic<int> requestedLimit_ = 5;
+    std::atomic<int> requestedLimit_ = 2;
 };

@@ -26,6 +26,7 @@ struct Message {
     static Message Init(Id id, const std::string& payload = "");
 
     static Message InitRequest(size_t pieceIndex, size_t blockOffset, size_t blockLength);
+    static Message InitCancel(size_t pieceIndex, size_t blockOffset, size_t blockLength);
 
     std::string ToString() const;
 };

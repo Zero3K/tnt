@@ -52,19 +52,26 @@ ConnectedPeersStatusRow::ConnectedPeersStatusRow(
 
 std::string ConnectedPeersStatusRow::GetValue() {
     auto [connectedCnt, totalCnt] = dataSrc_();
-    
-    static std::string icons = "/-\\|";
+
+    static const std::vector<std::string> icons = {
+        "[ / ]",
+        "[ - ]",
+        "[ \\ ]",
+        "[ | ]"
+    };
+    static const std::string deadIcon = "[~_~]";
+
     static int i = 0;
 
     std::stringstream sstr;
-    sstr << CLEAR_LINE << BOLD << LIGHT_GRAY << "[";
+    sstr << CLEAR_LINE << BOLD << LIGHT_GRAY;
 
     if (connectedCnt != 0)
         sstr << icons[i];
     else
-        sstr << "x";
+        sstr << deadIcon;
 
-    sstr << "]" << RESET << LIGHT_GRAY
+    sstr << RESET << LIGHT_GRAY
         << " Peers connected: " << YELLOW << BOLD << connectedCnt
         << RESET << DARK_GRAY << " out of " << totalCnt << " found";
 

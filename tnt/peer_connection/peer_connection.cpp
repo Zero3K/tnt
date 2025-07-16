@@ -11,7 +11,6 @@
 using namespace std::chrono_literals;
 const std::string proto = "BitTorrent protocol";
 
-
 PeerConnection::PeerConnection(const Peer& peer, std::string selfId, std::string hash) 
     : peer_(peer), selfId_(selfId), hash_(hash), socket_(peer.ip, peer.port, 3000ms, 10000ms) {}
 

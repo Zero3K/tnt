@@ -7,13 +7,18 @@
 #include <thread>
 #include <iostream>
 
-static constexpr int oneTimeQueuedLimit = 1;
+static constexpr int oneTimeQueuedLimit = 5;
 
 Conductor::Conductor(const std::vector<Peer>& peers, const TorrentFile& file, PieceStorage& storage)
     : file_(file), peers(peers), storage_(storage) {}
 
 void Conductor::ConnectPeer(Peer peer) {
     downloaders_.emplace_back(std::make_unique<PeerDownloader>(peer, file_, [&](std::shared_ptr<Piece> piece) {
+        if (endgame_) {
+            for (auto& ptr : downloaders_)
+                ptr->CancelPiece(piece);
+        }
+        
         storage_.PieceDownloaded(piece);
     }));
 
@@ -73,9 +78,23 @@ void Conductor::Download() {
     }
 
     while (storage_.GetFinishedCount() < storage_.GetTotalCount()) {
+        if (!endgame_ && storage_.GetPendingCount() + storage_.GetFinishedCount() >= storage_.GetTotalCount()) {
+            endgame_ = true;
+
+            for (auto& ptr : downloaders_)
+                ptr->FlushPieces(true);
+        }
+
         auto piece = storage_.AcquirePiece();
-        if (piece != nullptr)
-            QueuePiece(piece);
+        if (piece != nullptr) {
+            if (endgame_) {
+                BroadcastPiece(piece);    
+            } else {
+                QueuePiece(piece);
+            }
+        }
+        
+        // std::this_thread::sleep_for(10ms);
     }
 
     for (auto &dwn: downloaders_)
@@ -83,13 +102,30 @@ void Conductor::Download() {
 }
 
 void Conductor::QueuePiece(std::shared_ptr<Piece> piece) {
-    for (size_t i = 0; true; i = (i + 1) % downloaders_.size()) {
-        auto &dwn = *downloaders_[i];
-        if (dwn.IsRunning() && dwn.IsPieceAvailable(piece->GetIndex())
-                && dwn.GetQueuedPiecesCount() <= oneTimeQueuedLimit) {
-            dwn.QueuePiece(piece);
-            break;
+    while (true) {
+        for (size_t i = 0; i < downloaders_.size(); i++) {
+            auto &dwn = *downloaders_[i];
+            if (dwn.IsRunning() && dwn.IsPieceAvailable(piece->GetIndex()) 
+                    && dwn.GetQueuedPiecesCount() < oneTimeQueuedLimit) {
+                dwn.QueuePiece(piece);
+                return;
+            }
         }
+        std::this_thread::sleep_for(30ms);
+    }
+}
+
+void Conductor::BroadcastPiece(std::shared_ptr<Piece> piece) {
+    int cnt = 0;
+    while (cnt == 0) {
+        for (size_t i = 0; i < downloaders_.size(); i++) {
+            auto &dwn = *downloaders_[i];
+            if (dwn.IsRunning() && dwn.IsPieceAvailable(piece->GetIndex())) {
+                dwn.QueuePiece(piece);
+                cnt++;
+            }
+        }
+        std::this_thread::sleep_for(30ms);
     }
 }
 

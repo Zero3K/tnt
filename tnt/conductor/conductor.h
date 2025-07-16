@@ -25,14 +25,20 @@ private:
     void ConnectPeer(Peer peer);
 
     /*
-     * Add specified piece to conductor's queue.
+     * Request specified piece from some peer.
      */
     void QueuePiece(std::shared_ptr<Piece> piece);
+
+    /*
+     * Request specified piece from all peers.
+     */
+    void BroadcastPiece(std::shared_ptr<Piece> piece);
 
     const std::vector<Peer>& peers;
     const TorrentFile& file_;
     PieceStorage& storage_;
 
+    std::atomic<bool> endgame_ = false;
     std::atomic<size_t> connectedPeersCount_ = 0;
     std::vector<std::unique_ptr<PeerDownloader>> downloaders_;
     std::vector<std::thread> threads_;

@@ -86,18 +86,18 @@ int main(int argc, char **argv) {
             peers.size()
         };
     });
-    board.SetRow(2, peersRow, 300ms);
+    board.SetRow(2, peersRow, 100ms);
 
     board.Start();
 
     while (pieceStorage.GetFinishedCount() < pieceStorage.GetTotalCount())
-        std::this_thread::sleep_for(1000ms);
-    std::this_thread::sleep_for(1000ms);
-    
-    board.Stop();
+        std::this_thread::sleep_for(1s);
 
     for (auto& t : threads)
         t.join();
+    
+    std::this_thread::sleep_for(1s);
+    board.Stop();
 
     return 0;
 }

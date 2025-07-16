@@ -19,6 +19,15 @@ PeerDownloader::PeerDownloader(Peer peer, TorrentFile file,
 
 void PeerDownloader::QueuePiece(std::shared_ptr<Piece> piece) {
     std::unique_lock lock(queueMtx_);
+    auto itQueue = std::find_if(queuedPieces_.begin(), queuedPieces_.end(), 
+        [&](const std::shared_ptr<Piece>& ptr) { 
+            return ptr->GetIndex() == piece->GetIndex();
+        }
+    );
+
+    if (itQueue != queuedPieces_.end())
+        return;
+
     queuedPieces_.push_back(piece);
 }
 
@@ -45,6 +54,7 @@ void PeerDownloader::CancelPiece(std::shared_ptr<Piece> piece) {
     );
 
     if (itReq != requestedPieces_.end()) {
+        CancelBlocksForPiece(*itReq);
         requestedPieces_.erase(itReq);
     }
 }
@@ -72,6 +82,13 @@ void PeerDownloader::RequestBlocksForPiece(std::shared_ptr<Piece> piece) {
     for (size_t j = 0; j < piece->GetBlocks().size(); j++) {
         auto& block = piece->GetBlocks()[j];
         connection_.SendMessage(Message::InitRequest(piece->GetIndex(), block.offset, block.length));
+    }
+}
+
+void PeerDownloader::CancelBlocksForPiece(std::shared_ptr<Piece> piece) {
+    for (size_t j = 0; j < piece->GetBlocks().size(); j++) {
+        auto& block = piece->GetBlocks()[j];
+        connection_.SendMessage(Message::InitCancel(piece->GetIndex(), block.offset, block.length));
     }
 }
 
@@ -116,7 +133,7 @@ std::shared_ptr<Piece> PeerDownloader::AcquirePiece() {
     if (queuedPieces_.empty())
         return nullptr;
 
-    size_t idx = rng() % queuedPieces_.size();  // FIX
+    size_t idx = rng() % queuedPieces_.size();
     std::swap(queuedPieces_[idx], queuedPieces_.back());
     auto piece = queuedPieces_.back();
     queuedPieces_.pop_back();
@@ -126,8 +143,10 @@ std::shared_ptr<Piece> PeerDownloader::AcquirePiece() {
 
 void PeerDownloader::Terminate() {
     connection_.CloseConnection();
+    FlushPieces();
+}
 
-    // canceling unfinished pieces
+void PeerDownloader::FlushPieces(bool sendCancel) {
     std::vector<std::shared_ptr<Piece>> toRemove;
 
     queueMtx_.lock();
@@ -137,8 +156,11 @@ void PeerDownloader::Terminate() {
     queueMtx_.unlock();
 
     reqMtx_.lock();
-    for (auto ptr : requestedPieces_)
+    for (auto ptr : requestedPieces_) {
         toRemove.push_back(ptr);
+        if (sendCancel)
+            CancelBlocksForPiece(ptr);
+    }
     requestedPieces_.clear();
     reqMtx_.unlock();
 
