@@ -18,7 +18,7 @@ void TorrentTracker::UpdatePeers(const TorrentFile& tf, std::string peerId, int 
             { "downloaded", std::to_string(0) },
             { "left", std::to_string(tf.length) },
             { "compact", std::to_string(1) },
-            { "numwant", std::to_string(100) }
+            { "numwant", std::to_string(50) }
         }
     );
 
@@ -32,11 +32,13 @@ void TorrentTracker::UpdatePeers(const TorrentFile& tf, std::string peerId, int 
 
     for (size_t i = 0; i < rawPeers.size(); i += 6) {
         peers_.push_back(Peer {
-            .ip = std::to_string((uint8_t)rawPeers[i]) + "."
-                + std::to_string((uint8_t)rawPeers[i + 1]) + "."
-                + std::to_string((uint8_t)rawPeers[i + 2]) + "."
-                + std::to_string((uint8_t)rawPeers[i + 3]),
-            .port = ntohs(*reinterpret_cast<uint16_t*>(&rawPeers[i + 4]))
+            .ip = std::to_string(static_cast<uint8_t>(rawPeers[i])) + "."
+                + std::to_string(static_cast<uint8_t>(rawPeers[i + 1])) + "."
+                + std::to_string(static_cast<uint8_t>(rawPeers[i + 2])) + "."
+                + std::to_string(static_cast<uint8_t>(rawPeers[i + 3])),
+            
+            .port = (static_cast<uint8_t>(rawPeers[i + 4]) << 8) 
+                + static_cast<uint8_t>(rawPeers[i + 5])
         });
     }
 }

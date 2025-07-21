@@ -1,50 +1,10 @@
 #pragma once
 
+#include "info_row.h"
 #include <string>
 #include <functional>
 #include <tuple>
 #include <thread>
-
-class InfoRow {
-public:
-    /*
-     * Get string to display.
-     */
-    virtual std::string GetValue() = 0;
-};
-
-
-class EmptyRow : public InfoRow {
-public:
-    std::string GetValue() override;
-};
-
-
-class DownloadProgressBarRow : public InfoRow {
-public:
-    DownloadProgressBarRow(
-        std::function<std::tuple<int, int, bool>()> dataSrc
-    );
-    
-    std::string GetValue() override;
-
-private:
-    std::function<std::tuple<int, int, bool>()> dataSrc_;
-};
-
-
-class ConnectedPeersStatusRow : public InfoRow {
-public:
-    ConnectedPeersStatusRow(
-        std::function<std::tuple<int, int>()> dataSrc
-    );
-    
-    std::string GetValue() override;
-
-private:
-    std::function<std::tuple<int, int>()> dataSrc_;
-};
-
 
 
 class InfoBoard {

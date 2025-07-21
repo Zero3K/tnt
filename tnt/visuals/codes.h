@@ -1,14 +1,16 @@
 #pragma once
 
-#define RESET         "\033[0m"
-#define BOLD          "\033[1m"
-#define GREEN         "\033[38;5;114m"
-#define DARK_GRAY     "\033[38;5;243m"
-#define LIGHT_GRAY    "\033[38;5;252m"
-#define YELLOW        "\033[38;5;222m"
+#define RESET           "\033[0m"
+#define BOLD            "\033[1m"
+#define GREEN           "\033[38;5;114m"
 
-#define MOVE_UP       "\033[1F"
-#define CLEAR_LINE    "\033[2K"
+#define VERY_DARK_GRAY  "\033[38;5;236m"
+#define DARK_GRAY       "\033[38;5;243m"
+#define LIGHT_GRAY      "\033[38;5;252m"
+#define YELLOW          "\033[38;5;222m"
+
+#define MOVE_UP         "\033[1F"
+#define CLEAR_LINE      "\033[2K"
 
 // #define GREEN   "\033[32m"      /* Green */
 // #define YELLOW  "\033[33m"      /* Yellow */

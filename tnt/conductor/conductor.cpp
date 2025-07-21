@@ -12,6 +12,11 @@ static constexpr int oneTimeQueuedLimit = 5;
 Conductor::Conductor(const std::vector<Peer>& peers, const TorrentFile& file, PieceStorage& storage)
     : file_(file), peers(peers), storage_(storage) {}
 
+Conductor::~Conductor() {
+    for (auto& t : threads_)
+        t.join();
+}
+
 void Conductor::ConnectPeer(Peer peer) {
     downloaders_.emplace_back(std::make_unique<PeerDownloader>(peer, file_, [&](std::shared_ptr<Piece> piece) {
         if (endgame_) {
@@ -19,7 +24,11 @@ void Conductor::ConnectPeer(Peer peer) {
                 ptr->CancelPiece(piece);
         }
         
-        storage_.PieceDownloaded(piece);
+        if (storage_.PieceDownloaded(piece)) {
+            speedMtx_.lock();
+            downloadTimes_.emplace(std::chrono::steady_clock::now());
+            speedMtx_.unlock();
+        }
     }));
 
     auto dmMainTask = [&](PeerDownloader& dwn) {
@@ -101,10 +110,6 @@ void Conductor::Download() {
         dwn->Terminate();
 }
 
-bool Conductor::isEndgame() {
-    return endgame_;
-}
-
 void Conductor::QueuePiece(std::shared_ptr<Piece> piece) {
     while (true) {
         for (size_t i = 0; i < downloaders_.size(); i++) {
@@ -133,11 +138,18 @@ void Conductor::BroadcastPiece(std::shared_ptr<Piece> piece) {
     }
 }
 
-Conductor::~Conductor() {
-    for (auto& t : threads_)
-        t.join();
-}
-
 size_t Conductor::GetConnectedCount() const {
     return connectedPeersCount_;
+}
+
+float Conductor::GetSpeed() const {
+    auto now = std::chrono::steady_clock::now();
+    while (!downloadTimes_.empty() && now - downloadTimes_.front() > 5s) {
+        downloadTimes_.pop();
+    }
+    return downloadTimes_.size() / 5.0f;
+}
+
+bool Conductor::isEndgame() {
+    return endgame_;
 }

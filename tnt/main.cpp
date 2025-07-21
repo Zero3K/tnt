@@ -3,7 +3,10 @@
 #include "torrent_file/types.h"
 #include "torrent_tracker.h"
 #include "peer_connection/peer_connection.h"
-#include "visuals/visuals.h"
+#include "visuals/infoboard.h"
+#include "visuals/rows/download_progress_row.h"
+#include "visuals/rows/connected_peers_row.h"
+#include "visuals/rows/current_speed_row.h"
 #include "conductor/conductor.h"
 #include <cxxopts.hpp>
 #include <exception>
@@ -46,8 +49,8 @@ int main(int argc, char **argv) {
     std::ifstream stream(tfPath);
     stream >> file;
 
-    std::cout << " - Name: " <<  file.name << std::endl;
-    std::cout << " - Comment: " << file.comment << std::endl;
+    std::cout << " > Name: " <<  file.name << std::endl;
+    std::cout << " > Comment: " << file.comment << std::endl;
 
     TorrentTracker tracker(file.announce);
     tracker.UpdatePeers(file, "TTST0APP1DONT2WORRY3", 12345);
@@ -66,7 +69,7 @@ int main(int argc, char **argv) {
 
     // =========================================================
  
-    InfoBoard board(3, 100ms);
+    InfoBoard board(4, 100ms);
 
     auto tp = std::chrono::steady_clock::now();
     auto progressRow = std::make_shared<DownloadProgressBarRow>([&]{
@@ -76,7 +79,7 @@ int main(int argc, char **argv) {
             cond.isEndgame()
         };
     });
-    board.SetRow(2, progressRow, 200ms);
+    board.SetRow(3, progressRow, 200ms);
 
     auto peersRow = std::make_shared<ConnectedPeersStatusRow>([&]{
         return std::tuple<int, int>{
@@ -85,6 +88,13 @@ int main(int argc, char **argv) {
         };
     });
     board.SetRow(1, peersRow, 300ms);
+
+    auto speedRow = std::make_shared<CurrentSpeedRow>(file, [&]{
+        return std::tuple<float>{
+            static_cast<float>(cond.GetSpeed())
+        };
+    });
+    board.SetRow(2, speedRow, 1s);
 
     board.Start();
 

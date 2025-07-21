@@ -1,5 +1,8 @@
-#include "visuals.h"
 #include "codes.h"
+#include "infoboard.h"
+#include "rows/empty_row.h"
+#include "rows/download_progress_row.h"
+#include "rows/connected_peers_row.h"
 #include <sstream>
 #include <memory>
 #include <string>
@@ -9,63 +12,7 @@
 using namespace std::chrono;
 
 
-std::string EmptyRow::GetValue() {
-    return "";
-}
-
-
-DownloadProgressBarRow::DownloadProgressBarRow(
-    std::function<std::tuple<int, int, bool>()> dataSrc
-) : dataSrc_(dataSrc) {}
-
-std::string DownloadProgressBarRow::GetValue() {
-    auto [downloadedCnt, totalCnt, isEndgame] = dataSrc_();
-
-    // yeah it looks pretty bad but i'll fix it
-    
-    std::stringstream sstr;
-    sstr << CLEAR_LINE;
-
-    int progress = downloadedCnt * 50 / totalCnt;
-
-    sstr << GREEN << "Progress: [";
-    
-    for (int i = 0; i < progress; i++) 
-        sstr << "=";
-    if (progress != 50)
-        sstr << ">";
-
-    for (int i = 0; i < 50 - progress - 1; i++) 
-        sstr << " ";
-    sstr << "] ";
-
-    float percentage = downloadedCnt * 100.0 / totalCnt;
-    sstr << std::fixed << std::setprecision(2) << BOLD << percentage << "%";
-    if (isEndgame) {
-        sstr << YELLOW << " ↯";
-    }
-
-    return sstr.str();
-}
-
-
-ConnectedPeersStatusRow::ConnectedPeersStatusRow(
-    std::function<std::tuple<int, int>()> dataSrc
-) : dataSrc_(dataSrc) {}
-
-std::string ConnectedPeersStatusRow::GetValue() {
-    auto [connectedCnt, totalCnt] = dataSrc_();
-
-    std::stringstream sstr;
-    sstr << CLEAR_LINE << RESET << LIGHT_GRAY
-        << "Peers connected: " << YELLOW << BOLD << connectedCnt
-        << RESET << DARK_GRAY << " out of " << totalCnt << " found";
-
-    return sstr.str();
-}
-
-
-InfoBoard::InfoBoard(int rowCount,  milliseconds checkInterval) 
+InfoBoard::InfoBoard(int rowCount, milliseconds checkInterval) 
     : checkInterval_(checkInterval), updateIntervals_(rowCount), 
     rows_(rowCount, std::make_shared<EmptyRow>()), lastDisplayed_(rowCount) {}
 

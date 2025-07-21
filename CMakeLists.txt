@@ -66,7 +66,11 @@ add_library(conductor
     tnt/conductor/conductor.cpp
 )
 add_library(visuals
-    tnt/visuals/visuals.cpp
+    tnt/visuals/infoboard.cpp
+    tnt/visuals/rows/empty_row.cpp
+    tnt/visuals/rows/download_progress_row.cpp
+    tnt/visuals/rows/connected_peers_row.cpp
+    tnt/visuals/rows/current_speed_row.cpp
 )
 
 add_executable(${PROJECT_NAME} tnt/main.cpp)

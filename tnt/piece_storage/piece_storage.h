@@ -16,26 +16,44 @@ class PieceStorage {
 public:
     explicit PieceStorage(const TorrentFile& tf, std::ofstream& outputFile);
 
+    /* 
+     * Acquires a piece for downloading.
+     */
     std::shared_ptr<Piece> AcquirePiece();
 
-    void PieceDownloaded(std::shared_ptr<Piece> piece);
+    /* 
+     * Called when a piece is downloaded.
+     */
+    bool PieceDownloaded(std::shared_ptr<Piece> piece);
 
-    // Returns the total amount of pieces that needs to be saved.
+    /* 
+     * Returns the number of pieces in torrent file.
+     */
     size_t GetTotalCount() const;
 
-    // Returns count of pieces that were already validated and saved to file.
+    /* 
+     * Returns count of pieces that were already validated and saved to file.
+     */
     size_t GetFinishedCount() const;
 
-    // Returns count of pieces that were acquired but are not saved yet.
+    /* 
+     * Returns count of pieces that were acquired but are not saved yet.
+     */
     size_t GetPendingCount() const;
 
-    // Returns count of pieces that were acquired but are not saved yet.
+    /* 
+     * Returns count of pieces that are currently queued for saving.
+     */
     size_t GetQueuedCount() const;
 private:
-    // Saves piece to file.
+    /* 
+     * Saves piece to file.
+     */
     void SavePieceToFile(std::shared_ptr<Piece> piece);
 
-    // Reserves space for a file on disk (by filling it with zeros).
+    /*
+     * Reserves space for a file on disk (by filling it with zeros).
+     */
     void ReserveSpace(std::ofstream& file, size_t bytesCount);
 
     std::queue<std::shared_ptr<Piece>> piecesQueue_;

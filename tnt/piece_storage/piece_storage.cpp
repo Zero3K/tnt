@@ -78,10 +78,10 @@ size_t PieceStorage::GetQueuedCount() const {
     return piecesQueue_.size();
 }
 
-void PieceStorage::PieceDownloaded(std::shared_ptr<Piece> piece) {
+bool PieceStorage::PieceDownloaded(std::shared_ptr<Piece> piece) {
     std::unique_lock lock(stateMtx_);
     if (savedState_[piece->GetIndex()]) 
-        return;
+        return false;
 
     if (!piece->HashMatches()) {
         piece->Reset();
@@ -89,6 +89,8 @@ void PieceStorage::PieceDownloaded(std::shared_ptr<Piece> piece) {
         queueMtx_.lock();
         piecesQueue_.push(piece);
         queueMtx_.unlock();
+
+        return false;
     } else {
         SavePieceToFile(piece);
         savedState_[piece->GetIndex()] = true;
@@ -96,5 +98,7 @@ void PieceStorage::PieceDownloaded(std::shared_ptr<Piece> piece) {
         
         finishedCount_++;
         pendingCount_--;
+
+        return true;
     }
 }

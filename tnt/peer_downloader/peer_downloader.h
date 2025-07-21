@@ -65,6 +65,11 @@ public:
      */
     bool IsRunning() const;
     
+    /*
+     * Clear pieces queue and discard all requested pieces.
+     * If `sendCancel` is true, also send `cancel` messages
+     * for requested pieces (if possible).
+     */
     void FlushPieces(bool sendCancel = false);
 private:
     void RequestBlocksForPiece(std::shared_ptr<Piece> piece);
@@ -72,11 +77,16 @@ private:
 
     std::shared_ptr<Piece> AcquirePiece();
 
-    void ProcessHaveMessage(Message& msg);
-    void ProcessPieceMessage(Message& msg);
     void ProcessChokeMessage(Message& msg);
     void ProcessUnchokeMessage(Message& msg);
-    void ProcessBitfieldMessage(Message& msg);
+    // void ProcessInterestedMessage(Message& msg);
+    // void ProcessNotInterestedMessage(Message& msg);
+    void ProcessHaveMessage(Message& msg);
+    void ProcessBitFieldMessage(Message& msg);
+    // void ProcessRequestMessage(Message& msg);
+    void ProcessPieceMessage(Message& msg);
+    // void ProcessCancelMessage(Message& msg);
+    
 
     mutable std::mutex queueMtx_, reqMtx_, availabilityMtx_;
     PeerConnection connection_;
@@ -87,6 +97,7 @@ private:
     std::function<void(std::shared_ptr<Piece>)> downloadCallback_;
     std::vector<bool> pieceAvailability_;
 
-    std::atomic<bool> choked_ = true;
     std::atomic<int> requestedLimit_ = 2;
+    std::atomic<bool> choked_ = true;
+    // std::atomic<bool> interested_ = false;
 };

@@ -113,16 +113,29 @@ void PeerDownloader::SendLoop() {
 void PeerDownloader::ReceiveLoop() {
     while (IsRunning()) {
         Message msg = connection_.RecieveMessage();
-        if (msg.id == Message::Id::Unchoke) {
-            ProcessUnchokeMessage(msg);
-        } else if (msg.id == Message::Id::Choke) {
-            ProcessChokeMessage(msg);
-        } else if (msg.id == Message::Id::Piece) {
-            ProcessPieceMessage(msg);
-        } else if (msg.id == Message::Id::BitField) {
-            ProcessBitfieldMessage(msg);
-        } else if (msg.id == Message::Id::Have) {
-            ProcessHaveMessage(msg);
+        switch (msg.id) {
+            case Message::Id::Unchoke:
+                ProcessUnchokeMessage(msg);
+                break;
+            
+            case Message::Id::Choke:
+                ProcessChokeMessage(msg);
+                break;
+            
+            case Message::Id::Piece:
+                ProcessPieceMessage(msg);
+                break;
+            
+            case Message::Id::BitField:
+                ProcessBitFieldMessage(msg);
+                break;
+            
+            case Message::Id::Have:
+                ProcessChokeMessage(msg);
+                break;
+            
+            default:
+                break;
         }
     }
 }
@@ -204,7 +217,7 @@ void PeerDownloader::ProcessHaveMessage(Message& msg) {
     availabilityMtx_.unlock();
 }
 
-void PeerDownloader::ProcessBitfieldMessage(Message& msg) {
+void PeerDownloader::ProcessBitFieldMessage(Message& msg) {
     std::lock_guard lock(availabilityMtx_);
 
     std::string data = msg.payload;

@@ -83,7 +83,7 @@ namespace Bencode {
         } else if (stream.peek() == 'd') {
             return ReadDict(stream);
         } else {
-            throw;
+            throw std::runtime_error(std::string("got unknown token '") + std::to_string(int(stream.peek())) + "'");
         }
     }
 
