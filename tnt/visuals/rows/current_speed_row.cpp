@@ -16,7 +16,7 @@ std::string CurrentSpeedRow::GetValue() {
     sstr << CLEAR_LINE << RESET << LIGHT_GRAY << " ~ "
         << "Current speed: " << YELLOW << BOLD 
         << std::fixed << std::setprecision(2) 
-        << speed * torrentFile_.pieceLength / 1e6 << " MB/s" << RESET;
+        << speed * torrentFile_.info.pieceLength / 1e6 << " MB/s" << RESET;
 
     return sstr.str();
 }

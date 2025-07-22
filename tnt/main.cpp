@@ -49,8 +49,9 @@ int main(int argc, char **argv) {
     std::ifstream stream(tfPath);
     stream >> file;
 
-    std::cout << " > Name: " <<  file.name << std::endl;
-    std::cout << " > Comment: " << file.comment << std::endl;
+    std::cout << " > Announce: " <<  file.announce << std::endl;
+    if (file.comment.has_value())
+        std::cout << " > Comment: " << file.comment.value() << std::endl;
 
     TorrentTracker tracker(file.announce);
     tracker.UpdatePeers(file, "TTST0APP1DONT2WORRY3", 12345);
@@ -58,13 +59,13 @@ int main(int argc, char **argv) {
 
     std::ofstream outputFile(outputFilePath);
     PieceStorage pieceStorage(file, outputFile);
-
+    
     auto rng = std::default_random_engine();
     std::shuffle(peers.begin(), peers.end(), rng);
-
+    
     Conductor cond(peers, file, pieceStorage);
     std::vector<std::thread> threads;
-
+    
     threads.emplace_back([ptr = &cond] { ptr->Download(); });
 
     // =========================================================
@@ -75,7 +76,7 @@ int main(int argc, char **argv) {
     auto progressRow = std::make_shared<DownloadProgressBarRow>([&]{
         return std::tuple<int, int, bool>{
             pieceStorage.GetFinishedCount(),
-            file.pieceHashes.size(),
+            file.info.pieces.size(),
             cond.isEndgame()
         };
     });

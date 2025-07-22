@@ -14,7 +14,7 @@ std::default_random_engine rng;
 PeerDownloader::PeerDownloader(Peer peer, TorrentFile file,
         std::function<void(std::shared_ptr<Piece>)> callback) : 
     connection_(peer, "TTST1APP2DONT3WORRY6", file.infoHash),
-    pieceAvailability_(file.pieceHashes.size(), false),
+    pieceAvailability_(file.info.pieces.size(), false),
     downloadCallback_(callback) {}
 
 void PeerDownloader::QueuePiece(std::shared_ptr<Piece> piece) {

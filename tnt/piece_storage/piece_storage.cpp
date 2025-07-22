@@ -9,16 +9,18 @@
 using namespace std::chrono_literals;
 
 PieceStorage::PieceStorage(const TorrentFile& tf, std::ofstream& outputFile) 
-        : tf_(tf), outputFile_(outputFile), totalCount_(tf.pieceHashes.size()), 
-        savedState_(tf.pieceHashes.size()) {
+        : tf_(tf), outputFile_(outputFile), totalCount_(tf.info.pieces.size()), 
+        savedState_(tf.info.pieces.size()) {
     std::vector<std::shared_ptr<Piece>> piecesOrd;
-    piecesOrd.reserve(tf.pieceHashes.size());
+    piecesOrd.reserve(tf.info.pieces.size());
 
-    for (size_t i = 0; i < tf.pieceHashes.size(); i++) {
+    for (size_t i = 0; i < tf.info.pieces.size(); i++) {
         piecesOrd.push_back(std::make_shared<Piece>(
             i,
-            std::min(tf.length, (i + 1) * tf.pieceLength) - i * tf.pieceLength,
-            tf.pieceHashes[i]
+            std::min(
+                std::get<TorrentFile::SingleFileStructure>(tf.info.structure).length,
+                (i + 1) * tf.info.pieceLength) - i * tf.info.pieceLength,
+            tf.info.pieces[i]
         ));
     }
 
@@ -28,7 +30,7 @@ PieceStorage::PieceStorage(const TorrentFile& tf, std::ofstream& outputFile)
     for (auto piece : piecesOrd)
         piecesQueue_.push(piece);
 
-    ReserveSpace(outputFile_, tf.length);
+    ReserveSpace(outputFile_, std::get<TorrentFile::SingleFileStructure>(tf.info.structure).length);
 }
 
 void PieceStorage::ReserveSpace(std::ofstream& file, size_t bytesCount) {
@@ -56,7 +58,7 @@ std::shared_ptr<Piece> PieceStorage::AcquirePiece() {
 
 void PieceStorage::SavePieceToFile(std::shared_ptr<Piece> piece) {
     std::lock_guard lock(fileMtx_);
-    outputFile_.seekp(piece->GetIndex() * tf_.pieceLength);
+    outputFile_.seekp(piece->GetIndex() * tf_.info.pieceLength);
     auto data = piece->GetData();
     outputFile_.write(&data[0], data.size());
 }
