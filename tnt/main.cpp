@@ -28,17 +28,20 @@ int main(int argc, char **argv) {
     cxxopts::Options options("tnt", "tnt is a simple torrent client");
     options.add_options()
         ("h,help", "Print usage")
-        ("o,out", "Output file name.", cxxopts::value<std::string>())
-        ("file", "Metainfo (.torrent) file.", cxxopts::value<std::string>());
+        ("q,quiet", "Minimal output")
+        ("o,out", "Output file name", cxxopts::value<std::string>())
+        ("file", "Metainfo (.torrent) file", cxxopts::value<std::string>());
 
     options.parse_positional({"file"});
     auto result = options.parse(argc, argv);
 
     if (result.count("help")) {
-        options.positional_help("<torrent file>");
+        options.positional_help("torrent_file");
         std::cout << options.help() << std::endl;
         return 0;
     }
+
+    bool quiet = result.count("quiet");
 
     // =========================================================
 
@@ -49,9 +52,11 @@ int main(int argc, char **argv) {
     std::ifstream stream(tfPath);
     stream >> file;
 
-    std::cout << " > Announce: " <<  file.announce << std::endl;
-    if (file.comment.has_value())
-        std::cout << " > Comment: " << file.comment.value() << std::endl;
+    if (!quiet) {
+        std::cout << " > Announce: " <<  file.announce << std::endl;
+        if (file.comment.has_value())
+            std::cout << " > Comment: " << file.comment.value() << std::endl;
+    }
 
     TorrentTracker tracker(file.announce);
     tracker.UpdatePeers(file, "TTST0APP1DONT2WORRY3", 12345);
@@ -97,7 +102,8 @@ int main(int argc, char **argv) {
     });
     board.SetRow(2, speedRow, 1s);
 
-    board.Start();
+    if (!quiet)
+        board.Start();
 
     while (pieceStorage.GetFinishedCount() < pieceStorage.GetTotalCount())
         std::this_thread::sleep_for(1s);
@@ -107,6 +113,12 @@ int main(int argc, char **argv) {
     
     std::this_thread::sleep_for(1s);
     board.Stop();
+
+    if (quiet) {
+        std::cout << "download finished"  << std::endl;
+    } else {
+        std::cout << std::endl << " > Download finished" << std::endl;
+    }
 
     return 0;
 }
