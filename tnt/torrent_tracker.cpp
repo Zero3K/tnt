@@ -17,7 +17,7 @@ void TorrentTracker::UpdatePeers(const TorrentFile& tf, std::string peerId, int 
             { "port", std::to_string(port) },
             { "uploaded", std::to_string(0) },
             { "downloaded", std::to_string(0) },
-            { "left", std::to_string(std::get<TorrentFile::SingleFileStructure>(tf.info.structure).length) },
+            { "left", std::to_string(tf.CalculateSize()) },
             { "compact", std::to_string(1) },
             { "numwant", std::to_string(50) }
         }

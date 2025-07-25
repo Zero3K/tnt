@@ -40,6 +40,7 @@ add_library(bencode
 )
 add_library(torrent_file
     tnt/torrent_file/parser.cpp
+    tnt/torrent_file/types.cpp
 )
 add_library(torrent_tracker
     tnt/torrent_tracker.cpp

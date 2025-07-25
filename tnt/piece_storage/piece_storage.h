@@ -14,7 +14,7 @@
 
 class PieceStorage {
 public:
-    explicit PieceStorage(const TorrentFile& tf, std::ofstream& outputFile);
+    explicit PieceStorage(const TorrentFile& torrentFile, std::filesystem::path outputDir);
 
     /* 
      * Acquires a piece for downloading.
@@ -52,9 +52,14 @@ private:
     void SavePieceToFile(std::shared_ptr<Piece> piece);
 
     /*
-     * Reserves space for a file on disk (by filling it with zeros).
+     * Reserves space for files on disk (by creating them and filling them with zeros).
      */
     void ReserveSpace(std::ofstream& file, size_t bytesCount);
+
+    /*
+     * Initializes file streams for output files.
+     */
+    void InitFileStreams();
 
     std::queue<std::shared_ptr<Piece>> piecesQueue_;
     std::vector<bool> savedState_;
@@ -63,8 +68,17 @@ private:
     std::atomic<size_t> finishedCount_ = 0;
     std::atomic<size_t> pendingCount_ = 0;
 
-    TorrentFile tf_;
-    std::ofstream& outputFile_;
+    const TorrentFile& torrentFile_;
+    std::filesystem::path outputPath_;
+    
+    /*
+     * In multifile case, holds streams for all files in the same order 
+     * as they were stored in torrent file.
+     * In single file case, holds one stream for coresponding file.
+     */
+    std::vector<std::ofstream> outputFiles_;
+    std::vector<std::mutex> outputFilesMtxs_;
+    std::vector<size_t> outputFilesSizesPref_;
 
-    mutable std::mutex queueMtx_, fileMtx_, stateMtx_;
+    mutable std::mutex queueMtx_, stateMtx_;
 };

@@ -8,7 +8,6 @@
 
 using DataMapType = std::map<std::string, std::shared_ptr<Bencode::Entity>>;
 
-
 std::string TfGetAnnounce(DataMapType& dataMap) {
     if (!dataMap.count("announce"))
         throw std::runtime_error("Torrent file is invalid (data dictionary is missing \"announce\" key)");
@@ -80,6 +79,50 @@ TorrentFile::SingleFileStructure TfGetSingleFileStructure(DataMapType& infoMap) 
     return result;
 }
 
+TorrentFile::MultiFileStructure TfGetMultiFileStructure(DataMapType& infoMap) {
+    TorrentFile::MultiFileStructure result;
+
+    if (!infoMap.count("name"))
+        throw std::runtime_error("Torrent file is invalid (info dictionary is missing \"name\" key)");
+    if (std::dynamic_pointer_cast<Bencode::String>(infoMap["name"]) == nullptr)
+        throw std::runtime_error("Torrent file is invalid (\"name\" value is not a string)");
+    result.name = std::static_pointer_cast<Bencode::String>(infoMap["name"])->value;
+    
+    if (!infoMap.count("files"))
+        throw std::runtime_error("Torrent file is invalid (info dictionary is missing \"files\" key)");
+    if (std::dynamic_pointer_cast<Bencode::List>(infoMap["files"]) == nullptr)
+        throw std::runtime_error("Torrent file is invalid (\"files\" value is not a list)");
+
+    for (auto filePtr : std::static_pointer_cast<Bencode::List>(infoMap["files"])->value) {
+        if (std::dynamic_pointer_cast<Bencode::Dict>(filePtr) == nullptr)
+            throw std::runtime_error("Torrent file is invalid (one of \"files\" elements is not a dictionary)");
+        
+        auto fileMap = std::static_pointer_cast<Bencode::Dict>(filePtr)->value;
+        TorrentFile::MultiFileStructure::File file;
+
+        if (!fileMap.count("length"))
+            throw std::runtime_error("Torrent file is invalid (\"files\" dictionary is missing \"length\" key)");
+        if (std::dynamic_pointer_cast<Bencode::Integer>(fileMap["length"]) == nullptr)
+            throw std::runtime_error("Torrent file is invalid (\"files.length\" value is not an integer)");
+        
+        file.length = std::static_pointer_cast<Bencode::Integer>(fileMap["length"])->value;
+
+        if (!fileMap.count("path"))
+            throw std::runtime_error("Torrent file is invalid (\"files\" dictionary is missing \"path\" key)");
+        if (std::dynamic_pointer_cast<Bencode::List>(fileMap["path"]) == nullptr)
+            throw std::runtime_error("Torrent file is invalid (\"files.path\" value is not a list)");
+        
+        for (auto pathPtr : std::static_pointer_cast<Bencode::List>(fileMap["path"])->value) {
+            if (std::dynamic_pointer_cast<Bencode::String>(pathPtr) == nullptr)
+                throw std::runtime_error("Torrent file is invalid (one of \"files.path\" elements is not a string)");
+            file.path.push_back(std::static_pointer_cast<Bencode::String>(pathPtr)->value);
+        }
+
+        result.files.push_back(std::move(file));
+    }
+
+    return result;
+}
 
 TorrentFile::Info TfGetInfo(DataMapType& infoMap) {
     TorrentFile::Info result;
@@ -101,7 +144,7 @@ TorrentFile::Info TfGetInfo(DataMapType& infoMap) {
     if (!infoMap.count("files")) {
         result.structure = TfGetSingleFileStructure(infoMap);
     } else {
-        throw std::runtime_error("Multifile torrents are not supported yet");
+        result.structure = TfGetMultiFileStructure(infoMap);
     }
  
     return result;

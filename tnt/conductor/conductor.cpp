@@ -103,7 +103,7 @@ void Conductor::Download() {
             }
         }
         
-        // std::this_thread::sleep_for(10ms);
+        std::this_thread::sleep_for(10ms);
     }
 
     for (auto &dwn: downloaders_)

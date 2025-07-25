@@ -4,6 +4,7 @@
 #include "torrent_tracker.h"
 #include "peer_connection/peer_connection.h"
 #include "visuals/infoboard.h"
+#include "visuals/codes.h"
 #include "visuals/rows/download_progress_row.h"
 #include "visuals/rows/connected_peers_row.h"
 #include "visuals/rows/current_speed_row.h"
@@ -29,7 +30,7 @@ int main(int argc, char **argv) {
     options.add_options()
         ("h,help", "Print usage")
         ("q,quiet", "Minimal output")
-        ("o,out", "Output file name", cxxopts::value<std::string>())
+        ("o,out", "Output file name", cxxopts::value<std::string>()->default_value("."))
         ("file", "Metainfo (.torrent) file", cxxopts::value<std::string>());
 
     options.parse_positional({"file"});
@@ -46,24 +47,36 @@ int main(int argc, char **argv) {
     // =========================================================
 
     fs::path tfPath = result["file"].as<std::string>();
-    fs::path outputFilePath = result["out"].as<std::string>();
+    fs::path outputPath = result["out"].as<std::string>();
     
     TorrentFile file;
     std::ifstream stream(tfPath);
     stream >> file;
 
     if (!quiet) {
+        std::cout << BOLD;
         std::cout << " > Announce: " <<  file.announce << std::endl;
         if (file.comment.has_value())
             std::cout << " > Comment: " << file.comment.value() << std::endl;
+        
+        if (std::holds_alternative<TorrentFile::MultiFileStructure>(file.info.structure)) {
+            std::cout << " > Output directory name: \""
+                << std::get<TorrentFile::MultiFileStructure>(file.info.structure).name << "\"" << std::endl;
+        } else if (std::holds_alternative<TorrentFile::SingleFileStructure>(file.info.structure)) {
+            std::cout << " > Output file name: \"" 
+                << std::get<TorrentFile::SingleFileStructure>(file.info.structure).name << "\"" << std::endl;
+        } else {
+            throw std::runtime_error("unknown torrent file structure");
+        }
+        std::cout << RESET;
     }
 
     TorrentTracker tracker(file.announce);
+    // temporary
     tracker.UpdatePeers(file, "TTST0APP1DONT2WORRY3", 12345);
     auto peers = tracker.GetPeers();
 
-    std::ofstream outputFile(outputFilePath);
-    PieceStorage pieceStorage(file, outputFile);
+    PieceStorage pieceStorage(file, outputPath);
     
     auto rng = std::default_random_engine();
     std::shuffle(peers.begin(), peers.end(), rng);
@@ -114,6 +127,7 @@ int main(int argc, char **argv) {
     std::this_thread::sleep_for(1s);
     board.Stop();
 
+    std::cout << RESET;
     if (quiet) {
         std::cout << "download finished"  << std::endl;
     } else {

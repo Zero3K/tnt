@@ -23,13 +23,13 @@ make
 ### Features to implement
 - [x] Accept parameters from input args
 - [x] Save downloaded pieces to disk
-- [ ] Don't download already saved parts of file
+- [ ] Don't download already saved parts of file (load saved data)
 - [x] Implement endgame mode
 - [x] Reconnect to peers after spontaneous disconnect
 - [x] Keep track of peers pieces availabilty 
 - [ ] Add more command line options (like timeouts)
 - [x] Rework piece downloading strategy
-- [ ] Add support for multifile torrents.
+- [x] Add support for multifile torrents.
 - [x] Move console graphics logic to separate classes
 - [ ] Dynamic piece wait time? (it's the time which storage piece waits before returning piece to pool)
 - [x] Move piece acquiring logic to separate class? 

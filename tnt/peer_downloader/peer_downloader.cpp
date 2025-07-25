@@ -131,7 +131,7 @@ void PeerDownloader::ReceiveLoop() {
                 break;
             
             case Message::Id::Have:
-                ProcessChokeMessage(msg);
+                ProcessHaveMessage(msg);
                 break;
             
             default:
@@ -156,6 +156,7 @@ std::shared_ptr<Piece> PeerDownloader::AcquirePiece() {
 
 void PeerDownloader::Terminate() {
     connection_.CloseConnection();
+    choked_ = true;
     FlushPieces();
 }
 
@@ -222,7 +223,7 @@ void PeerDownloader::ProcessBitFieldMessage(Message& msg) {
 
     std::string data = msg.payload;
     for (size_t i = 0; i < pieceAvailability_.size(); i++) {
-        pieceAvailability_[i] = (data[i / 8] >> (i % 8)) & 1;
+        pieceAvailability_[i] = (data[i / 8] >> (7 - (i % 8))) & 1;
     }
 }
 
