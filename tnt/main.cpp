@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
     options.add_options()
         ("h,help", "Print usage")
         ("q,quiet", "Minimal output")
-        ("o,out", "Output file name", cxxopts::value<std::string>()->default_value("."))
+        ("o,out", "Output directory", cxxopts::value<std::string>()->default_value("."))
         ("file", "Metainfo (.torrent) file", cxxopts::value<std::string>());
 
     options.parse_positional({"file"});

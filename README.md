@@ -13,12 +13,18 @@ make
 
 ### Usage
 ```sh
-./tnt -o output_file torrent_file
+tnt [OPTION...] torrent_file
+
+  -h, --help     Print usage
+  -q, --quiet    Minimal output
+  -o, --out arg  Output directory (working directory by default)
 ```
 
-### Specifics
-- Self-written bencode decoding/encoding library.
-- `cpr` is used for making HTTP requests to trackers.
+### Features
+- Self-written bencode decoding/encoding library and torrent file parser.
+- `cpr` is used for communicating with HTTP trackers.
+- Endgame mode is implemented.
+- Multifile torrents are supported.
 
 ### Features to implement
 - [x] Accept parameters from input args
@@ -27,9 +33,9 @@ make
 - [x] Implement endgame mode
 - [x] Reconnect to peers after spontaneous disconnect
 - [x] Keep track of peers pieces availabilty 
-- [ ] Add more command line options (like timeouts)
+- [ ] Add more command line options (like timeouts or announce override)
 - [x] Rework piece downloading strategy
 - [x] Add support for multifile torrents.
 - [x] Move console graphics logic to separate classes
-- [ ] Dynamic piece wait time? (it's the time which storage piece waits before returning piece to pool)
 - [x] Move piece acquiring logic to separate class? 
+- [ ] Add support for UDP trackers?
