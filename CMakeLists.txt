@@ -28,13 +28,9 @@ FetchContent_Declare(cpr
 )
 FetchContent_MakeAvailable(cpr)
 
-# cxxopts
-FetchContent_Declare(
-  cxxopts
-  GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
-  GIT_TAG        v3.2.0
-)
-FetchContent_MakeAvailable(cxxopts)
+# cxxopts (local)
+add_library(cxxopts INTERFACE)
+target_include_directories(cxxopts INTERFACE cxxopts/include)
 
 # |-------------------------------------------------
 
