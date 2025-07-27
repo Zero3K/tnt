@@ -1,9 +1,5 @@
 #include "torrent_tracker.h"
 #include "bencode/decoding.h"
-#include <sstream>
-#include <iostream>
-#include <vector>
-#include <string>
 
 #ifdef _WIN32
     // Define version requirements before any Windows headers
@@ -32,7 +28,6 @@
     #if WINVER >= 0x0502
         #define USE_WINHTTP
         #include <winhttp.h>
-        #include <wininet.h>  // For INTERNET_DEFAULT_* constants
         #pragma comment(lib, "winhttp.lib")
     #else
         // Fallback to cpr for older Windows versions
@@ -43,12 +38,18 @@
     #include <netinet/in.h>
 #endif
 
+// Standard C++ includes after Windows headers to avoid conflicts
+#include <sstream>
+#include <iostream>
+#include <vector>
+#include <string>
+
 
 TorrentTracker::TorrentTracker(const std::string& announce_url) : url_(announce_url) {}
 
 #if defined(_WIN32) && defined(USE_WINHTTP)
 // Windows Server 2003+ implementation using WinHTTP
-void TorrentTracker::UpdatePeers(const TorrentFile& tf, std::string peerId, int port) {
+void TorrentTracker::UpdatePeers(const TorrentFile& tf, const std::string& peerId, int port) {
     // Parse announce URL to extract components
     std::string announce = tf.announce;
     
@@ -98,8 +99,8 @@ void TorrentTracker::UpdatePeers(const TorrentFile& tf, std::string peerId, int 
         throw std::runtime_error("Failed to initialize WinHTTP session");
     }
     
-    // Connect to server
-    DWORD port_num = (protocol == "https") ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
+    // Connect to server - use WinHTTP port type and standard ports
+    INTERNET_PORT port_num = (protocol == "https") ? 443 : 80;
     HINTERNET hConnect = WinHttpConnect(hSession, wHost.data(), port_num, 0);
     if (!hConnect) {
         WinHttpCloseHandle(hSession);
@@ -182,7 +183,7 @@ void TorrentTracker::UpdatePeers(const TorrentFile& tf, std::string peerId, int 
 
 #else
 // Unix/Linux implementation or Windows pre-Server 2003 using cpr
-void TorrentTracker::UpdatePeers(const TorrentFile& tf, std::string peerId, int port) {
+void TorrentTracker::UpdatePeers(const TorrentFile& tf, const std::string& peerId, int port) {
     cpr::Response response = cpr::Get(
         cpr::Url { tf.announce },
         cpr::Parameters {
