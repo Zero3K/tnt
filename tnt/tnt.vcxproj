@@ -200,7 +200,7 @@
       <Project>{0a1b2c3d-4e5f-6789-4567-890123456789}</Project>
     </ProjectReference>
     <ProjectReference Include="..\cxxopts\cxxopts.vcxproj">
-      <Project>{cxxopts01-2345-6789-abcd-ef0123456789}</Project>
+      <Project>{CXXOPTS01-2345-6789-ABCD-EF0123456789}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
