@@ -4,7 +4,16 @@
 #include <iostream>
 
 #ifdef _WIN32
+    // Include winsock2.h BEFORE windows.h to avoid conflicts
+    #include <winsock2.h>
+    #pragma comment(lib, "ws2_32.lib")
+    
+    // Prevent windows.h from including winsock.h
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
     #include <windows.h>
+    
     // Ensure we have at least Windows Server 2003 API level (0x0502)
     #if !defined(WINVER)
         #define WINVER 0x0502
@@ -23,8 +32,6 @@
         // Fallback to cpr for older Windows versions
         #include <cpr/cpr.h>
     #endif
-    #include <winsock2.h>
-    #pragma comment(lib, "ws2_32.lib")
 #else
     #include <cpr/cpr.h>
     #include <netinet/in.h>
