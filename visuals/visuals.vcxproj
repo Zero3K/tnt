@@ -97,7 +97,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)tnt;$(SolutionDir)tnt\visuals;$(SolutionDir)tnt\visuals\rows;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)tnt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -114,7 +114,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)tnt;$(SolutionDir)tnt\visuals;$(SolutionDir)tnt\visuals\rows;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)tnt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -131,7 +131,7 @@
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)tnt;$(SolutionDir)tnt\visuals;$(SolutionDir)tnt\visuals\rows;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)tnt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -148,7 +148,7 @@
       <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)tnt;$(SolutionDir)tnt\visuals;$(SolutionDir)tnt\visuals\rows;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)tnt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -159,17 +159,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\tnt\ntisuals\infoboard.h" />
-    <ClInclude Include="..\tnt\ntisuals
+    <ClInclude Include="..\tnt\visuals\codes.h" />
+    <ClInclude Include="..\tnt\visuals\info_row.h" />
+    <ClInclude Include="..\tnt\visuals\infoboard.h" />
+    <ClInclude Include="..\tnt\visuals\rows\connected_peers_row.h" />
+    <ClInclude Include="..\tnt\visuals\rows\current_speed_row.h" />
+    <ClInclude Include="..\tnt\visuals\rows\download_progress_row.h" />
+    <ClInclude Include="..\tnt\visuals\rows\empty_row.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\tnt\ntisuals\infoboard.cpp" />
-    <ClCompile Include="..\tnt\ntisuals
-owsmpty_row.cpp" />
-    <ClCompile Include="..\tnt\ntisuals
-ows\download_progress_row.cpp" />
-    <ClCompile Include="..\tnt\ntisuals
-ows
+    <ClCompile Include="..\tnt\visuals\infoboard.cpp" />
+    <ClCompile Include="..\tnt\visuals\rows\connected_peers_row.cpp" />
+    <ClCompile Include="..\tnt\visuals\rows\current_speed_row.cpp" />
+    <ClCompile Include="..\tnt\visuals\rows\download_progress_row.cpp" />
+    <ClCompile Include="..\tnt\visuals\rows\empty_row.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

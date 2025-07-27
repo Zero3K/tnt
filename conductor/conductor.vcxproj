@@ -159,10 +159,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\tnt\nt
+    <ClInclude Include="..\tnt\conductor\conductor.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\tnt\nt
+    <ClCompile Include="..\tnt\conductor\conductor.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
