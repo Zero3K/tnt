@@ -47,12 +47,31 @@ add_library(torrent_file
 add_library(torrent_tracker
     tnt/torrent_tracker.cpp
 )
-target_link_libraries(
-    torrent_tracker PRIVATE cpr::cpr bencode
-)
+if(WIN32)
+    # Check if we can use WinHTTP (Windows Server 2003+)
+    # For simplicity, we'll assume any modern Windows build has WinHTTP
+    target_link_libraries(
+        torrent_tracker PRIVATE bencode winhttp ws2_32
+    )
+    # We still need cpr as a fallback for pre-Server 2003 or if WinHTTP fails
+    target_link_libraries(
+        torrent_tracker PRIVATE cpr::cpr
+    )
+else()
+    target_link_libraries(
+        torrent_tracker PRIVATE cpr::cpr bencode
+    )
+endif()
+
 add_library(tcp_connection
     tnt/tcp_connection/tcp_connection.cpp
 )
+if(WIN32)
+    target_link_libraries(
+        tcp_connection PRIVATE ws2_32
+    )
+endif()
+
 add_library(peer_connection
     tnt/peer_connection/peer_connection.cpp
     tnt/peer_connection/message.h
@@ -87,19 +106,40 @@ add_library(visuals
 
 add_executable(${PROJECT_NAME} tnt/main.cpp)
 
-target_link_libraries(
-    ${PROJECT_NAME} 
-    cpr::cpr 
-    ${OPENSSL_LIBRARIES}
-    cxxopts
+if(WIN32)
+    target_link_libraries(
+        ${PROJECT_NAME} 
+        cpr::cpr
+        ${OPENSSL_LIBRARIES}
+        cxxopts
+        winhttp
+        ws2_32
 
-    bencode 
-    torrent_file 
-    torrent_tracker
-    tcp_connection
-    peer_connection
-    piece_storage
-    peer_downloader
-    conductor
-    visuals
-)
+        bencode 
+        torrent_file 
+        torrent_tracker
+        tcp_connection
+        peer_connection
+        piece_storage
+        peer_downloader
+        conductor
+        visuals
+    )
+else()
+    target_link_libraries(
+        ${PROJECT_NAME} 
+        cpr::cpr 
+        ${OPENSSL_LIBRARIES}
+        cxxopts
+
+        bencode 
+        torrent_file 
+        torrent_tracker
+        tcp_connection
+        peer_connection
+        piece_storage
+        peer_downloader
+        conductor
+        visuals
+    )
+endif()
