@@ -11,9 +11,11 @@ set(CMAKE_CXX_STANDARD 20)
 
 include(FetchContent)
 
-# openssl
-find_package(OpenSSL REQUIRED)
-include_directories(${OPENSSL_INCLUDE_DIR})
+# hash-library (replacing OpenSSL)
+add_library(hash_library
+    hash-library/sha1.cpp
+    hash-library/sha1_util.cpp
+)
 
 # libcpr
 if(NOT DEFINED CPR_USE_SYSTEM_CURL)
@@ -84,6 +86,9 @@ add_library(piece_storage
     tnt/piece_storage/piece.cpp
     tnt/piece_storage/piece_storage.cpp
 )
+target_link_libraries(
+    piece_storage PRIVATE hash_library
+)
 add_library(peer_downloader
     tnt/peer_downloader/peer_downloader.cpp
 )
@@ -110,7 +115,6 @@ if(WIN32)
     target_link_libraries(
         ${PROJECT_NAME} 
         cpr::cpr
-        ${OPENSSL_LIBRARIES}
         cxxopts
         winhttp
         ws2_32
@@ -129,7 +133,6 @@ else()
     target_link_libraries(
         ${PROJECT_NAME} 
         cpr::cpr 
-        ${OPENSSL_LIBRARIES}
         cxxopts
 
         bencode 
