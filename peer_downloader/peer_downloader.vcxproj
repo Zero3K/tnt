@@ -159,10 +159,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..	nt\peer_downloader\peer_downloader.h" />
+    <ClInclude Include="..\tnt\nt\peer_downloader\peer_downloader.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..	nt\peer_downloader\peer_downloader.cpp" />
+    <ClCompile Include="..\tnt\nt\peer_downloader\peer_downloader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

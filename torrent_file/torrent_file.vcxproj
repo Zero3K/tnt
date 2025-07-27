@@ -97,7 +97,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)tnt;$(SolutionDir)tnt\torrent_file;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)tnt;$(SolutionDir)tnt\torrent_file;$(SolutionDir)tnt\bencode;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -114,7 +114,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)tnt;$(SolutionDir)tnt\torrent_file;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)tnt;$(SolutionDir)tnt\torrent_file;$(SolutionDir)tnt\bencode;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -131,7 +131,7 @@
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)tnt;$(SolutionDir)tnt\torrent_file;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)tnt;$(SolutionDir)tnt\torrent_file;$(SolutionDir)tnt\bencode;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -148,7 +148,7 @@
       <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)tnt;$(SolutionDir)tnt\torrent_file;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)tnt;$(SolutionDir)tnt\torrent_file;$(SolutionDir)tnt\bencode;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -159,12 +159,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..	nt	orrent_file\parser.h" />
-    <ClInclude Include="..	nt	orrent_file	ypes.h" />
+    <ClInclude Include="..\tnt\torrent_file\parser.h" />
+    <ClInclude Include="..\tnt\torrent_file\types.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..	nt	orrent_file\parser.cpp" />
-    <ClCompile Include="..	nt	orrent_file	ypes.cpp" />
+    <ClCompile Include="..\tnt\torrent_file\parser.cpp" />
+    <ClCompile Include="..\tnt\torrent_file\types.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\bencode\bencode.vcxproj">
+      <Project>{2a3b4c5d-6e7f-8901-bcde-f12345678901}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

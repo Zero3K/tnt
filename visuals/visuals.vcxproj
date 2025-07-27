@@ -159,14 +159,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..	ntisuals\infoboard.h" />
-    <ClInclude Include="..	ntisuals
+    <ClInclude Include="..\tnt\ntisuals\infoboard.h" />
+    <ClInclude Include="..\tnt\ntisuals
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..	ntisuals\infoboard.cpp" />
-    <ClCompile Include="..	ntisualsowsmpty_row.cpp" />
-    <ClCompile Include="..	ntisualsows\download_progress_row.cpp" />
-    <ClCompile Include="..	ntisualsows
+    <ClCompile Include="..\tnt\ntisuals\infoboard.cpp" />
+    <ClCompile Include="..\tnt\ntisuals
+owsmpty_row.cpp" />
+    <ClCompile Include="..\tnt\ntisuals
+ows\download_progress_row.cpp" />
+    <ClCompile Include="..\tnt\ntisuals
+ows
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

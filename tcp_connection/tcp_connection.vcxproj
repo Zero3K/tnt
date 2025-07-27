@@ -159,10 +159,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..	nt	cp_connection	cp_connection.h" />
+    <ClInclude Include="..\tnt\tcp_connection\tcp_connection.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..	nt	cp_connection	cp_connection.cpp" />
+    <ClCompile Include="..\tnt\tcp_connection\tcp_connection.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

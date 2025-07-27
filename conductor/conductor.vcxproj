@@ -159,10 +159,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..	nt
+    <ClInclude Include="..\tnt\nt
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..	nt
+    <ClCompile Include="..\tnt\nt
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
