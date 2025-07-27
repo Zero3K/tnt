@@ -16,7 +16,9 @@ find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 # libcpr
-set(CPR_USE_SYSTEM_CURL ON)
+if(NOT DEFINED CPR_USE_SYSTEM_CURL)
+    set(CPR_USE_SYSTEM_CURL ON)
+endif()
 FetchContent_Declare(cpr 
     QUIET
     GIT_REPOSITORY https://github.com/libcpr/cpr.git
@@ -46,7 +48,7 @@ add_library(torrent_tracker
     tnt/torrent_tracker.cpp
 )
 target_link_libraries(
-    torrent_tracker PRIVATE cpr::cpr
+    torrent_tracker PRIVATE cpr::cpr bencode
 )
 add_library(tcp_connection
     tnt/tcp_connection/tcp_connection.cpp
@@ -56,6 +58,9 @@ add_library(peer_connection
     tnt/peer_connection/message.h
     tnt/peer_connection/message.cpp
 )
+target_link_libraries(
+    peer_connection PRIVATE tcp_connection
+)
 add_library(piece_storage
     tnt/piece_storage/piece.cpp
     tnt/piece_storage/piece_storage.cpp
@@ -63,8 +68,14 @@ add_library(piece_storage
 add_library(peer_downloader
     tnt/peer_downloader/peer_downloader.cpp
 )
+target_link_libraries(
+    peer_downloader PRIVATE peer_connection piece_storage
+)
 add_library(conductor
     tnt/conductor/conductor.cpp
+)
+target_link_libraries(
+    conductor PRIVATE peer_downloader
 )
 add_library(visuals
     tnt/visuals/infoboard.cpp
