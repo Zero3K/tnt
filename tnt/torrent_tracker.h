@@ -7,7 +7,7 @@
 
 class TorrentTracker {
 public:
-    TorrentTracker(const std::string& url);
+    TorrentTracker(const std::string& announce_url);
     void UpdatePeers(const TorrentFile& tf, std::string peerId, int port);
     const std::vector<Peer>& GetPeers() const;
 

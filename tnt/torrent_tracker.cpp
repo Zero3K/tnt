@@ -2,25 +2,31 @@
 #include "bencode/decoding.h"
 #include <sstream>
 #include <iostream>
+#include <vector>
+#include <string>
 
 #ifdef _WIN32
-    // Include winsock2.h BEFORE windows.h to avoid conflicts
-    #include <winsock2.h>
-    #pragma comment(lib, "ws2_32.lib")
-    
-    // Prevent windows.h from including winsock.h
-    #ifndef WIN32_LEAN_AND_MEAN
-        #define WIN32_LEAN_AND_MEAN
-    #endif
-    #include <windows.h>
-    
-    // Ensure we have at least Windows Server 2003 API level (0x0502)
+    // Define version requirements before any Windows headers
     #if !defined(WINVER)
         #define WINVER 0x0502
     #endif
     #if !defined(_WIN32_WINNT)
         #define _WIN32_WINNT 0x0502
     #endif
+    
+    // Prevent windows.h from defining min/max macros and including winsock.h
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
+    
+    // Include winsock2.h BEFORE windows.h to avoid conflicts
+    #include <winsock2.h>
+    #pragma comment(lib, "ws2_32.lib")
+    
+    #include <windows.h>
     
     // Check for Windows Server 2003 or later to use WinHTTP
     #if WINVER >= 0x0502
@@ -38,7 +44,7 @@
 #endif
 
 
-TorrentTracker::TorrentTracker(const std::string& url) : url_(url) {}
+TorrentTracker::TorrentTracker(const std::string& announce_url) : url_(announce_url) {}
 
 #if defined(_WIN32) && defined(USE_WINHTTP)
 // Windows Server 2003+ implementation using WinHTTP
